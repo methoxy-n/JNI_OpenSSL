@@ -15,6 +15,7 @@
 #include "openssl/err.h"
 #include "openssl/bio.h"
 #include "openssl/ssl.h"
+#include "openssl/des.h"
 
 
 extern "C"
@@ -245,7 +246,7 @@ RSA * createRSApriv(std::string sKey) {
 
 extern "C"
 JNIEXPORT jbyteArray JNICALL
-Java_com_example_myapplication_MainActivity_publicencryptRsa(JNIEnv *env, jobject thiz, jstring key,
+Java_com_example_myapplication_MainActivity_publicEncryptRSA(JNIEnv *env, jobject thiz, jstring key,
                                                        jbyteArray plain_text) {
       jboolean isCopy;
 //    jbyte* keyData = env->GetByteArrayElements(public_key, &isCopy);
@@ -297,7 +298,7 @@ Java_com_example_myapplication_MainActivity_publicencryptRsa(JNIEnv *env, jobjec
 
 extern "C"
 JNIEXPORT jbyteArray JNICALL
-Java_com_example_myapplication_MainActivity_privatedecryptRsa(JNIEnv *env, jobject thiz,
+Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobject thiz,
                                                        jstring private_key,
                                                        jbyteArray enc_text) {
     jboolean isCopy;
@@ -336,6 +337,61 @@ Java_com_example_myapplication_MainActivity_privatedecryptRsa(JNIEnv *env, jobje
     return DecryptedByteArray;
 }
 /********************************* END RSA *********************************/
+
+/********************************* START 3DES *********************************/
+//DES_key_schedule start3DES() {
+//    DES_cblock Key1 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 };
+//    DES_cblock Key2 = { 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22 };
+//    DES_cblock Key3 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 } ;
+//    DES_key_schedule SchKey1,SchKey2,SchKey3;
+//    return SchKey1, SchKey2, SchKey3;
+//}
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_myapplication_MainActivity_encrypt3des(JNIEnv *env, jobject thiz,
+                                                        jbyteArray plain_text) {
+    jboolean isCopy;
+    int plainText_len = env->GetArrayLength(plain_text);
+    jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
+    const unsigned char* plainText;
+    plainText = (unsigned char *) temp;
+
+    DES_cblock Key1 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
+    DES_cblock Key2 = { 0x45, 0x11, 0xf2, 0x17, 0x21, 0xd4, 0xc5, 0x80 };
+    DES_cblock Key3 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
+    DES_key_schedule SchKey1, SchKey2, SchKey3;
+
+    if ((DES_set_key_checked(&Key1, &SchKey1) || DES_set_key_checked(&Key2, &SchKey2) || DES_set_key_checked(&Key3, &SchKey3)) == -2)
+    {
+        LOGE(" Weak key ....\n");
+        return nullptr;
+    }
+    DES_cblock cipher;
+
+    DES_ecb3_encrypt((DES_cblock *)&plainText, &cipher, &SchKey1, &SchKey2, &SchKey3, DES_ENCRYPT);
+    LOGI("TDES Enc: %s", cipher);
+
+    jbyteArray EncryptedByteArray = env->NewByteArray(plainText_len);
+    env->SetByteArrayRegion(EncryptedByteArray, 0, plainText_len, (jbyte *) cipher);
+
+    return EncryptedByteArray;
+
+
+    // TODO: implement encrypt3des()
+}
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thiz,
+                                                        jbyteArray enc_text) {
+    DES_cblock Key1 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
+    DES_cblock Key2 = { 0x45, 0x11, 0xf2, 0x17, 0x21, 0xd4, 0xc5, 0x80 };
+    DES_cblock Key3 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
+    DES_key_schedule SchKey1,SchKey2,SchKey3;
+
+    DES_cblock plain_text;
+    // TODO: implement decrypt3des()
+}
+/********************************* END 3DES *********************************/
 
 //extern "C"
 //JNIEXPORT jbyteArray JNICALL
@@ -582,4 +638,5 @@ Java_com_example_myapplication_MainActivity_privatedecryptRsa(JNIEnv *env, jobje
 //
 //    return result;
 //}
+
 

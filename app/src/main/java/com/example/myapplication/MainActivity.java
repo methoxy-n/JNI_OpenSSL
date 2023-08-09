@@ -63,6 +63,11 @@ public class MainActivity extends AppCompatActivity {
     public native byte[] calculateHash(byte[] plainArray);
     public native byte[] encryptAes256(byte[] key, byte[] plainText);
     public native byte[] decryptAes256(byte[] key, byte[] encText);
+    public native byte[] encrypt3des(byte[] plainText);
+    public native byte[] decrypt3des(byte[] encText);
+    public native byte[] publicEncryptRSA(String key, byte[] plainText);
+    public native byte[] privateDecryptRSA(String key, byte[] encText);
+
     //String publickey = new String(Files.readAllBytes(Paths.get("C:\\Users\\metho\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\cpp\\publickey.txt")), StandardCharsets.UTF_8);
     //String privatekey = new String(Files.readAllBytes(Paths.get("C:\\Users\\metho\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\cpp\\private.txt")), StandardCharsets.UTF_8);
 
@@ -102,8 +107,6 @@ public class MainActivity extends AppCompatActivity {
             "WV3biTqIGMf15CI+//dSShbzI7nyoYQ8bl6HsFbEnGyS95PySdF6gUhsPKG83Ih2\n" +
             "SftvM2TzsO9D8XemkOHNwayPMN6YQA3SDZTZNNv3LYD7NkqhRQI0YUo=\n" +
             "-----END RSA PRIVATE KEY-----";
-    public native byte[] publicencryptRsa(String key, byte[] plainText);
-    public native byte[] privatedecryptRsa(String key, byte[] encText);
 
     public PublicKey getFromString(String keystr) throws Exception
     {
@@ -210,13 +213,13 @@ public class MainActivity extends AppCompatActivity {
         //byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
 //        byte [] encryptedText = encryptAes256(keyData, plainText);
 //        byte [] decryptedText = decryptAes256(keyData, encryptedText);
-          byte [] encText = publicencryptRsa(public_key, plainText);
+          byte [] encText = publicEncryptRSA(public_key, plainText);
             sb2 = new StringBuilder();
             for (byte b : encText) {
                 sb2.append(String.format("%02X", b));
             }
             Log.d(TAG, "onCreate: encBa = " + sb2.toString());
-          byte[] decBa = privatedecryptRsa(private_key, encText);
+          byte[] decBa = privateDecryptRSA(private_key, encText);
         sb2 = new StringBuilder();
         for (byte b : decBa) {
             sb2.append(String.format("%02X", b));
