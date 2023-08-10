@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     public native byte[] calculateHash(byte[] plainArray);
     public native byte[] encryptAes256(byte[] key, byte[] plainText);
     public native byte[] decryptAes256(byte[] key, byte[] encText);
-    public native byte[] encrypt3des(byte[] plainText);
+    public native byte[] encrypt3des(byte[] plain_text);
     public native byte[] decrypt3des(byte[] encText);
     public native byte[] publicEncryptRSA(String key, byte[] plainText);
     public native byte[] privateDecryptRSA(String key, byte[] encText);
@@ -226,6 +226,9 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d(TAG, "onCreate: decBa = " + sb2.toString());
 
+        byte[] plainText1 = "thqyeuipmloqsadf12".getBytes();
+        byte[] t_des_encrypted = encrypt3des(plainText1);
+        //decrypt3des(t_des_encrypted);
 //          String decStr = new String(decBa, StandardCharsets.UTF_8);
 //        Log.d(TAG, "onCreate: decStr = " + decStr);
         // plainTextHASH

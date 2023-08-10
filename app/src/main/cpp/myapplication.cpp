@@ -339,13 +339,90 @@ Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobje
 /********************************* END RSA *********************************/
 
 /********************************* START 3DES *********************************/
-//DES_key_schedule start3DES() {
-//    DES_cblock Key1 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 };
-//    DES_cblock Key2 = { 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22 };
-//    DES_cblock Key3 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 } ;
-//    DES_key_schedule SchKey1,SchKey2,SchKey3;
-//    return SchKey1, SchKey2, SchKey3;
-//}
+#define DES_BLOCK_SIZE 8
+
+unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 1 - encryption | 0 - decryption
+    DES_cblock Key1 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 };
+    DES_cblock Key2 = { 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22 };
+    DES_cblock Key3 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 } ;
+    DES_key_schedule SchKey1,SchKey2,SchKey3;
+
+    unsigned char indata[DES_BLOCK_SIZE];
+    unsigned char outdata[DES_BLOCK_SIZE];
+
+    //DES_cblock input_data = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+//    if ((DES_set_key_checked(&Key1, &SchKey1) || DES_set_key_checked(&Key2, &SchKey2) || DES_set_key_checked(&Key3, &SchKey3)) == -2)
+//    {
+//        LOGE(" Weak key ....\n");
+//        return nullptr;
+//    }
+//    DES_cblock cipher;
+//    DES_cblock plain_text1;
+
+    DES_cblock cblock = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    // 1 - encryption | 0 - decryption
+    if(mode == DES_ENCRYPT) {
+        memset(cblock,0,sizeof(DES_cblock));
+        DES_set_odd_parity(&cblock);
+        unsigned char cipher_out[length];
+        int i = 0;
+        int j = 0;
+        int count_read = 0;
+        int count_write = 0;
+        while (true) {
+            for(; i < length ;) {
+                for(int j = 0; j < DES_BLOCK_SIZE; ++j) {
+                    indata[j] = text[i];
+                    ++i;
+                    ++count_read;
+                    if(count_read == DES_BLOCK_SIZE) break;
+                }
+                break;
+            }
+            if (count_read < DES_BLOCK_SIZE)
+                break;
+            DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
+            //for(int i = 0; i < DES_BLOCK_SIZE; ++i) indata[i];
+            count_read = 0;
+            for(; j < length; ++j) { // tut kakayato huynya
+                cipher_out[count_write] = outdata[j];
+                ++count_write;
+                if(count_write == DES_BLOCK_SIZE) break;
+            }
+            //count_write = 0;
+        }
+        //DES_ede3_cbc_encrypt(indata, outdata, count_write, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
+        return cipher_out;
+    }
+    else if(mode == DES_DECRYPT) {
+        memset(cblock,0,sizeof(DES_cblock));
+        DES_set_odd_parity(&cblock);
+        unsigned char *plain_out = nullptr;
+        int count_read = 0;
+        int count_write = 0;
+        while (true) {
+            for(int i = 0; i < DES_BLOCK_SIZE; ++i) {
+                indata[i] = text[i];
+                ++count_read;
+            }
+            DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 0);
+            //indata[0] = '\0';
+            for(int i = 0; i < DES_BLOCK_SIZE; ++i) {
+                plain_out[i] = outdata[i];
+                ++count_write;
+            }
+            if (count_read < DES_BLOCK_SIZE)
+                break;
+        }
+        //DES_ede3_cbc_encrypt(indata, outdata, count_write, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
+        return plain_out;
+    }
+    else {
+        LOGE("Choose right mode, 1 - encryption | 0 - decryption");
+        return nullptr;
+    }
+}
 extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_com_example_myapplication_MainActivity_encrypt3des(JNIEnv *env, jobject thiz,
@@ -355,41 +432,37 @@ Java_com_example_myapplication_MainActivity_encrypt3des(JNIEnv *env, jobject thi
     jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
     const unsigned char* plainText;
     plainText = (unsigned char *) temp;
+//    LOGV("Text for t-des enc: %s", plainText);
 
-    DES_cblock Key1 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
-    DES_cblock Key2 = { 0x45, 0x11, 0xf2, 0x17, 0x21, 0xd4, 0xc5, 0x80 };
-    DES_cblock Key3 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
-    DES_key_schedule SchKey1, SchKey2, SchKey3;
+    unsigned char* cipher_text = start3DES(plainText, plainText_len, 1);
+    LOGI("Cipher: %s", cipher_text);
+//        for(int i = 0; i < plainText_len; ++i) LOGV("Text for t-des enc[%d]: %02X", i, plainText[i]);
+//        for(int i = 0; i < plainText_len; ++i) LOGV("TDES Enc[%d]: %02X", i, cipher[i]);
+//        for(int i = 0; i < plainText_len; ++i) LOGV("TDES DEC[%d]: %02X", i, plain_text1[i]);
 
-    if ((DES_set_key_checked(&Key1, &SchKey1) || DES_set_key_checked(&Key2, &SchKey2) || DES_set_key_checked(&Key3, &SchKey3)) == -2)
-    {
-        LOGE(" Weak key ....\n");
-        return nullptr;
-    }
-    DES_cblock cipher;
+    jbyteArray ByteArray = env->NewByteArray(plainText_len);
+    env->SetByteArrayRegion(ByteArray, 0, plainText_len,
+                            reinterpret_cast<const jbyte *>(start3DES(plainText, plainText_len, 1)));
 
-    DES_ecb3_encrypt((DES_cblock *)&plainText, &cipher, &SchKey1, &SchKey2, &SchKey3, DES_ENCRYPT);
-    LOGI("TDES Enc: %s", cipher);
+    return ByteArray;
 
-    jbyteArray EncryptedByteArray = env->NewByteArray(plainText_len);
-    env->SetByteArrayRegion(EncryptedByteArray, 0, plainText_len, (jbyte *) cipher);
-
-    return EncryptedByteArray;
-
-
-    // TODO: implement encrypt3des()
 }
 extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thiz,
                                                         jbyteArray enc_text) {
-    DES_cblock Key1 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
-    DES_cblock Key2 = { 0x45, 0x11, 0xf2, 0x17, 0x21, 0xd4, 0xc5, 0x80 };
-    DES_cblock Key3 = { 0x69, 0x2b, 0xe2, 0x30, 0x74, 0xbe, 0x19, 0x11 };
-    DES_key_schedule SchKey1,SchKey2,SchKey3;
+    jboolean isCopy;
+    int encText_len = env->GetArrayLength(enc_text);
+    jbyte* temp = env->GetByteArrayElements(enc_text, &isCopy);
+    const unsigned char* encText;
+    encText = (unsigned char *) temp;
 
-    DES_cblock plain_text;
-    // TODO: implement decrypt3des()
+
+    //LOGI("TDES Dec: %s", plain_text);
+    jbyteArray DecryptedByteArray = env->NewByteArray(encText_len);
+    env->SetByteArrayRegion(DecryptedByteArray, 0, encText_len, reinterpret_cast<const jbyte *>(start3DES(encText, encText_len, 0)));
+
+    return DecryptedByteArray;
 }
 /********************************* END 3DES *********************************/
 
@@ -638,5 +711,4 @@ Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thi
 //
 //    return result;
 //}
-
 
