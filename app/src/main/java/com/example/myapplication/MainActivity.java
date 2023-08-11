@@ -226,9 +226,9 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d(TAG, "onCreate: decBa = " + sb2.toString());
 
-        byte[] plainText1 = "thqyeuipmloqsadf12".getBytes();
+        byte[] plainText1 = "thqyeuipmloqsa12mloqsadf".getBytes();
         byte[] t_des_encrypted = encrypt3des(plainText1);
-        //decrypt3des(t_des_encrypted);
+        decrypt3des(t_des_encrypted);
 //          String decStr = new String(decBa, StandardCharsets.UTF_8);
 //        Log.d(TAG, "onCreate: decStr = " + decStr);
         // plainTextHASH

@@ -365,15 +365,18 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
     if(mode == DES_ENCRYPT) {
         memset(cblock,0,sizeof(DES_cblock));
         DES_set_odd_parity(&cblock);
-        unsigned char cipher_out[length];
+        unsigned char *cipher_out;
+        cipher_out = new unsigned char[length];
         int i = 0;
         int j = 0;
         int count_read = 0;
         int count_write = 0;
+        int count_read_whole = 0;
         while (true) {
             for(; i < length ;) {
-                for(int j = 0; j < DES_BLOCK_SIZE; ++j) {
-                    indata[j] = text[i];
+                for(int z = 0; z < DES_BLOCK_SIZE; ++z) { // read 8 bytes to indata --> out
+                    if(text[i] == '\0') break;
+                    indata[z] = text[i];
                     ++i;
                     ++count_read;
                     if(count_read == DES_BLOCK_SIZE) break;
@@ -382,15 +385,20 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
             }
             if (count_read < DES_BLOCK_SIZE)
                 break;
+            // encrypt 8 bytes from indata to outdata
             DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
             //for(int i = 0; i < DES_BLOCK_SIZE; ++i) indata[i];
+            count_read_whole+=count_read;
             count_read = 0;
-            for(; j < length; ++j) { // tut kakayato huynya
-                cipher_out[count_write] = outdata[j];
+
+            for(; j < count_read_whole; ++j) { // write encrypted 8 bytes to cipher_out
+                cipher_out[j] = outdata[count_write];
                 ++count_write;
                 if(count_write == DES_BLOCK_SIZE) break;
             }
-            //count_write = 0;
+            j++;
+
+            count_write = 0;
         }
         //DES_ede3_cbc_encrypt(indata, outdata, count_write, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
         return cipher_out;
@@ -398,23 +406,40 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
     else if(mode == DES_DECRYPT) {
         memset(cblock,0,sizeof(DES_cblock));
         DES_set_odd_parity(&cblock);
-        unsigned char *plain_out = nullptr;
+        unsigned char *plain_out;
+        plain_out = new unsigned char[length];
         int count_read = 0;
         int count_write = 0;
+        int count_read_whole = 0;
+        int i = 0;
+        int j = 0;
         while (true) {
-            for(int i = 0; i < DES_BLOCK_SIZE; ++i) {
-                indata[i] = text[i];
-                ++count_read;
-            }
-            DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 0);
-            //indata[0] = '\0';
-            for(int i = 0; i < DES_BLOCK_SIZE; ++i) {
-                plain_out[i] = outdata[i];
-                ++count_write;
+            for(; i < length ;) {
+                for(int z = 0; z < DES_BLOCK_SIZE; ++z) { // read 8 bytes to indata --> out
+                    if(text[i] == '\0') break;
+                    indata[z] = text[i];
+                    ++i;
+                    ++count_read;
+                    if(count_read == DES_BLOCK_SIZE) break;
+                }
+                break;
             }
             if (count_read < DES_BLOCK_SIZE)
                 break;
+
+            DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 0);
+            //indata[0] = '\0';
+            count_read_whole+=count_read;
+            count_read = 0;
+            for(; j < count_read_whole; ++j) {
+                plain_out[j] = outdata[count_write];
+                ++count_write;
+                if(count_write == DES_BLOCK_SIZE) break;
+            }
+            j++;
+            count_write = 0;
         }
+        //LOGV("plain_out: %s", plain_out);
         //DES_ede3_cbc_encrypt(indata, outdata, count_write, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
         return plain_out;
     }
@@ -457,6 +482,8 @@ Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thi
     const unsigned char* encText;
     encText = (unsigned char *) temp;
 
+    unsigned char* plain = start3DES(encText, encText_len, 0);
+    LOGI("Plain: %s", plain);
 
     //LOGI("TDES Dec: %s", plain_text);
     jbyteArray DecryptedByteArray = env->NewByteArray(encText_len);
