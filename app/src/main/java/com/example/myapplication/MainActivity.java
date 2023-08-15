@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d(TAG, "onCreate: decBa = " + sb2.toString());
 
-        byte[] plainText1 = "thqyeuipmloqsa12mloqsadf".getBytes();
+        byte[] plainText1 = "c307d1e566991874".getBytes();// thqyeuipmloqsa12mloqsadf
         byte[] t_des_encrypted = encrypt3des(plainText1);
         decrypt3des(t_des_encrypted);
 //          String decStr = new String(decBa, StandardCharsets.UTF_8);

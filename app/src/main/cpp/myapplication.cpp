@@ -17,7 +17,7 @@
 #include "openssl/ssl.h"
 #include "openssl/des.h"
 
-
+/********************************* SHA-256 *********************************/
 extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_com_example_myapplication_MainActivity_calculateHash(JNIEnv *env, jobject thiz,
@@ -50,6 +50,7 @@ Java_com_example_myapplication_MainActivity_calculateHash(JNIEnv *env, jobject t
     // return hash as result
     return j_hash_array;
 }
+/********************************* END SHA-256 *********************************/
 
 /********************************* AES_256 ENC/DEC *********************************/
 
@@ -159,16 +160,6 @@ Java_com_example_myapplication_MainActivity_decryptAes256(JNIEnv *env, jobject t
 /********************************* END AES *********************************/
 
 /********************************* RSA ENC/DEC *********************************/
-
-void replace_first(
-        std::string& s,
-        std::string const& toReplace,
-        std::string const& replaceWith
-) {
-    std::size_t pos = s.find(toReplace);
-    if (pos == std::string::npos) return;
-    s.replace(pos, toReplace.length(), replaceWith);
-}
 
 //RSA * createRSA(unsigned char* key, int mode) {
 //    RSA *rsa= NULL;
@@ -342,109 +333,154 @@ Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobje
 #define DES_BLOCK_SIZE 8
 
 unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 1 - encryption | 0 - decryption
-    DES_cblock Key1 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 };
-    DES_cblock Key2 = { 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22 };
-    DES_cblock Key3 = { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 } ;
-    DES_key_schedule SchKey1,SchKey2,SchKey3;
+    DES_cblock key1 = { 0x63, 0x33, 0x62, 0x79, 0x6b,0x39, 0x6c, 0x6f };
+    DES_cblock key2 = { 0x6b, 0x6f, 0x70, 0x31, 0x71, 0x63, 0x62, 0x6d };
+    DES_cblock key3 = { 0x63, 0x69, 0x7a, 0x36, 0x30, 0x31, 0x70, 0x71 } ;
+    DES_key_schedule ks1, ks2, ks3;
 
-    unsigned char indata[DES_BLOCK_SIZE];
-    unsigned char outdata[DES_BLOCK_SIZE];
+//    unsigned char indata[DES_BLOCK_SIZE]; // unsigned char[8]
+//    unsigned char outdata[DES_BLOCK_SIZE]; // unsigned char[8]
 
-    //DES_cblock input_data = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+//    DES_cblock input_data = {0x63, 0x33, 0x30, 0x37, 0x64, 0x31, 0x65, 0x35 };
 
-//    if ((DES_set_key_checked(&Key1, &SchKey1) || DES_set_key_checked(&Key2, &SchKey2) || DES_set_key_checked(&Key3, &SchKey3)) == -2)
-//    {
-//        LOGE(" Weak key ....\n");
-//        return nullptr;
-//    }
-//    DES_cblock cipher;
-//    DES_cblock plain_text1;
+//    DES_cblock key1, key2, key3;
+//    DES_cblock seed = {0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10};
+//    DES_key_schedule ks1, ks2, ks3;
+//    DES_cblock ivsetup = {0xE1, 0xE2, 0xE3, 0xD4, 0xD5, 0xC6, 0xC7, 0xA8};
+//    DES_cblock ivec;
+//
+//    memcpy(ivec, ivsetup, sizeof(ivsetup));
+//
+//    RAND_seed(seed, sizeof(DES_cblock));
 
-    DES_cblock cblock = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+//    DES_random_key(&key1);
+//    DES_random_key(&key2);
+//    DES_random_key(&key2);
+
+    DES_set_key(&key1, &ks1);
+    DES_set_key(&key2, &ks2);
+    DES_set_key(&key3, &ks3);
+
+    DES_cblock ivec = { 0x3f, 0x38, 0x33, 0x31, 0x6c, 0x71, 0x61, 0x6e }; // IV
+    memset(ivec,0,sizeof(DES_cblock));
+
+    if((DES_is_weak_key(&key1) || DES_is_weak_key(&key2) || DES_is_weak_key(&key3)) == 1) {
+        LOGE("Weak key...");
+        return nullptr;
+    }
+    //DES_set_odd_parity(&cblock);
+//    if (0 == (DES_set_key(&key1, &ks1) || DES_set_key(&Key2, &SchKey2) || DES_set_key(&Key3, &SchKey3))) {
+
+    DES_cblock cipher;
+    DES_cblock input_text;
+    DES_cblock enc_cipher; // unsigned char[8]
+    DES_cblock out_buf;
+
+//    memset(input_text, 0, sizeof(input_text));
+//    memset(cipher, 0, sizeof(cipher));
+//    memset(out_buf, 0, sizeof(out_buf));
+
+    unsigned char *cipher_out;
+    cipher_out = new unsigned char[length];
+
     // 1 - encryption | 0 - decryption
     if(mode == DES_ENCRYPT) {
-        memset(cblock,0,sizeof(DES_cblock));
-        DES_set_odd_parity(&cblock);
-        unsigned char *cipher_out;
-        cipher_out = new unsigned char[length];
         int i = 0;
         int j = 0;
         int count_read = 0;
         int count_write = 0;
         int count_read_whole = 0;
+
         while (true) {
             for(; i < length ;) {
                 for(int z = 0; z < DES_BLOCK_SIZE; ++z) { // read 8 bytes to indata --> out
                     if(text[i] == '\0') break;
-                    indata[z] = text[i];
+                    input_text[z] = text[i];
                     ++i;
                     ++count_read;
                     if(count_read == DES_BLOCK_SIZE) break;
                 }
                 break;
             }
+
+
             if (count_read < DES_BLOCK_SIZE)
                 break;
-            // encrypt 8 bytes from indata to outdata
-            DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
+
+
+            // encrypt 8 bytes from input_text to cipher
+            DES_ede3_cbc_encrypt(input_text, cipher, count_read, &ks1, &ks2, &ks3, &ivec, DES_ENCRYPT);
+            //DES_ecb3_encrypt(&input_data, &cipher, &SchKey1, &SchKey2, &SchKey3, DES_ENCRYPT);
             //for(int i = 0; i < DES_BLOCK_SIZE; ++i) indata[i];
-            count_read_whole+=count_read;
+
+            count_read_whole += count_read; // total read bytes
+
             count_read = 0;
 
             for(; j < count_read_whole; ++j) { // write encrypted 8 bytes to cipher_out
-                cipher_out[j] = outdata[count_write];
+                cipher_out[j] = cipher[count_write];
                 ++count_write;
                 if(count_write == DES_BLOCK_SIZE) break;
             }
+
             j++;
 
             count_write = 0;
         }
-        //DES_ede3_cbc_encrypt(indata, outdata, count_write, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
+
         return cipher_out;
     }
-    else if(mode == DES_DECRYPT) {
-        memset(cblock,0,sizeof(DES_cblock));
-        DES_set_odd_parity(&cblock);
+    if(mode == DES_DECRYPT) {
         unsigned char *plain_out;
         plain_out = new unsigned char[length];
+
         int count_read = 0;
         int count_write = 0;
         int count_read_whole = 0;
         int i = 0;
         int j = 0;
+
         while (true) {
             for(; i < length ;) {
                 for(int z = 0; z < DES_BLOCK_SIZE; ++z) { // read 8 bytes to indata --> out
                     if(text[i] == '\0') break;
-                    indata[z] = text[i];
+                    enc_cipher[z] = cipher_out[i];
                     ++i;
                     ++count_read;
                     if(count_read == DES_BLOCK_SIZE) break;
                 }
                 break;
             }
+
+
             if (count_read < DES_BLOCK_SIZE)
                 break;
 
-            DES_ede3_cbc_encrypt(indata, outdata, count_read, &SchKey1, &SchKey2, &SchKey3,&cblock, 0);
-            //indata[0] = '\0';
-            count_read_whole+=count_read;
+
+            // Decrypt 8 bytes from enc_cipher to out_buf
+            DES_ede3_cbc_encrypt(enc_cipher, out_buf, count_read, &ks1, &ks2, &ks3, &ivec,DES_DECRYPT);
+            //DES_ecb3_encrypt(&cipher2, &out_buf, &SchKey1, &SchKey2, &SchKey3, DES_DECRYPT);
+
+            count_read_whole += count_read; // total read bytes
+
             count_read = 0;
+
             for(; j < count_read_whole; ++j) {
-                plain_out[j] = outdata[count_write];
+                plain_out[j] = out_buf[count_write];
                 ++count_write;
                 if(count_write == DES_BLOCK_SIZE) break;
             }
+
             j++;
+
             count_write = 0;
         }
-        //LOGV("plain_out: %s", plain_out);
-        //DES_ede3_cbc_encrypt(indata, outdata, count_write, &SchKey1, &SchKey2, &SchKey3,&cblock, 1);
+
         return plain_out;
     }
+//    }
     else {
-        LOGE("Choose right mode, 1 - encryption | 0 - decryption");
+        LOGE("Choose mode, 1 - encryption | 0 - decryption");
         return nullptr;
     }
 }
@@ -457,13 +493,14 @@ Java_com_example_myapplication_MainActivity_encrypt3des(JNIEnv *env, jobject thi
     jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
     const unsigned char* plainText;
     plainText = (unsigned char *) temp;
-//    LOGV("Text for t-des enc: %s", plainText);
 
-    unsigned char* cipher_text = start3DES(plainText, plainText_len, 1);
-    LOGI("Cipher: %s", cipher_text);
-//        for(int i = 0; i < plainText_len; ++i) LOGV("Text for t-des enc[%d]: %02X", i, plainText[i]);
-//        for(int i = 0; i < plainText_len; ++i) LOGV("TDES Enc[%d]: %02X", i, cipher[i]);
-//        for(int i = 0; i < plainText_len; ++i) LOGV("TDES DEC[%d]: %02X", i, plain_text1[i]);
+    for(int i = 0; i < plainText_len; ++i)
+        LOGI("PlainText[%d]: %02X", i, plainText[i]);
+
+    unsigned char* cipher_text = start3DES(plainText, plainText_len, DES_ENCRYPT);
+    for(int i = 0; i < plainText_len; ++i)
+        LOGI("Cipher[%d]: %02X", i, cipher_text[i]);
+
 
     jbyteArray ByteArray = env->NewByteArray(plainText_len);
     env->SetByteArrayRegion(ByteArray, 0, plainText_len,
@@ -482,8 +519,9 @@ Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thi
     const unsigned char* encText;
     encText = (unsigned char *) temp;
 
-    unsigned char* plain = start3DES(encText, encText_len, 0);
-    LOGI("Plain: %s", plain);
+    unsigned char* plain = start3DES(encText, encText_len, DES_DECRYPT);
+    for(int i = 0; i < encText_len; ++i)
+        LOGI("Plain[%d]: %02X", i, plain[i]);
 
     //LOGI("TDES Dec: %s", plain_text);
     jbyteArray DecryptedByteArray = env->NewByteArray(encText_len);
