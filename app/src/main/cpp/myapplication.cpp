@@ -237,8 +237,8 @@ RSA * createRSApriv(std::string sKey) {
 
 extern "C"
 JNIEXPORT jbyteArray JNICALL
-Java_com_example_myapplication_MainActivity_publicEncryptRSA(JNIEnv *env, jobject thiz, jstring key,
-                                                       jbyteArray plain_text) {
+Java_com_example_myapplication_MainActivity_EncryptRSA(JNIEnv *env, jobject thiz, jstring key,
+                                                       jbyteArray plain_text, jstring mode) {
       jboolean isCopy;
 //    jbyte* keyData = env->GetByteArrayElements(public_key, &isCopy);
 //    const char* key_data;
@@ -255,6 +255,9 @@ Java_com_example_myapplication_MainActivity_publicEncryptRSA(JNIEnv *env, jobjec
     plainText = (unsigned char *) temp;
 //    plainText_len = strlen((char*)plainText);
 
+    unsigned char *enc_mode = (unsigned char *) (env)->GetStringUTFChars(mode, &isCopy);
+    std::string s_mode((char*) enc_mode);
+
     if(nullptr == plainText)
         return nullptr;
 
@@ -264,11 +267,20 @@ Java_com_example_myapplication_MainActivity_publicEncryptRSA(JNIEnv *env, jobjec
     int chEncryptedData_len = sizeof chEncryptedData;
     //for(int i = 0; i < chEncryptedData_len; ++i) chEncryptedData[i] = 0;
 
-    int iResult = RSA_public_encrypt(plainText_len, plainText, chEncryptedData, createRSApub(sKey), RSA_PKCS1_PADDING);
+    std::string pub_mode((char*) "Public");
+    std::string priv_mode((char*) "Private");
 
+    int iResult;
+
+    if(s_mode == pub_mode)
+        iResult = RSA_public_encrypt(plainText_len, plainText, chEncryptedData, createRSApub(sKey), RSA_PKCS1_PADDING);
+    if(s_mode == priv_mode)
+        iResult = RSA_private_encrypt(plainText_len, plainText, chEncryptedData, createRSApriv(sKey), RSA_PKCS1_PADDING);
+    else LOGE("Choose right mode --- Public / Private");
 //    env->ReleaseStringUTFChars(env, inData, cData);
 
 // If encryption fails, returns nullptr string, else returns encrypted string
+
     if(-1 == iResult) {
         char *chErrMsg = (char*)malloc(256);
         ERR_load_crypto_strings();
@@ -289,9 +301,9 @@ Java_com_example_myapplication_MainActivity_publicEncryptRSA(JNIEnv *env, jobjec
 
 extern "C"
 JNIEXPORT jbyteArray JNICALL
-Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobject thiz,
+Java_com_example_myapplication_MainActivity_DecryptRSA(JNIEnv *env, jobject thiz,
                                                        jstring private_key,
-                                                       jbyteArray enc_text) {
+                                                       jbyteArray enc_text, jstring mode) {
     jboolean isCopy;
     unsigned char *key_data = (unsigned char *) (env)->GetStringUTFChars(private_key, &isCopy);
     std::string sKey((char*) key_data);
@@ -301,6 +313,10 @@ Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobje
     jbyte* a = env->GetByteArrayElements(enc_text,&isCopy);
     const unsigned char* encText;
     encText = (unsigned char *) a;
+
+    unsigned char *enc_mode = (unsigned char *) (env)->GetStringUTFChars(mode, &isCopy);
+    std::string s_mode((char*) enc_mode);
+
     //encText_len = strlen((char*)encText);
 
    // RSA* myRSA = RSA_generate_key_ex(2048, 65537, NULL, NULL);
@@ -310,7 +326,17 @@ Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobje
     unsigned char chDecryptedData[256] = {};
     int chDecryptedData_len = sizeof chDecryptedData;
 
-    int result = RSA_private_decrypt(chDecryptedData_len,encText, chDecryptedData, createRSApriv(sKey), RSA_PKCS1_PADDING);
+    std::string pub_mode((char*) "Public");
+    std::string priv_mode((char*) "Private");
+
+    int result;
+
+    if(s_mode == pub_mode)
+        result = RSA_public_decrypt(chDecryptedData_len,encText, chDecryptedData, createRSApub(sKey), RSA_PKCS1_PADDING);
+    if(s_mode == priv_mode)
+        result = RSA_private_decrypt(chDecryptedData_len,encText, chDecryptedData, createRSApriv(sKey), RSA_PKCS1_PADDING);
+    else
+        LOGE("Choose right mode --- Public / Private");
 
     if(-1 == result) {
         char *chErrMsg = (char*)malloc(256);
@@ -335,7 +361,7 @@ Java_com_example_myapplication_MainActivity_privateDecryptRSA(JNIEnv *env, jobje
 unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 1 - encryption | 0 - decryption
     DES_cblock key1 = { 0x63, 0x33, 0x62, 0x79, 0x6b,0x39, 0x6c, 0x6f };
     DES_cblock key2 = { 0x6b, 0x6f, 0x70, 0x31, 0x71, 0x63, 0x62, 0x6d };
-    DES_cblock key3 = { 0x63, 0x69, 0x7a, 0x36, 0x30, 0x31, 0x70, 0x71 } ;
+    DES_cblock key3 = { 0x63, 0x69, 0x7a, 0x36, 0x30, 0x31, 0x70, 0x71 };
     DES_key_schedule ks1, ks2, ks3;
 
 //    unsigned char indata[DES_BLOCK_SIZE]; // unsigned char[8]
@@ -362,7 +388,6 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
     DES_set_key(&key3, &ks3);
 
     DES_cblock ivec = { 0x3f, 0x38, 0x33, 0x31, 0x6c, 0x71, 0x61, 0x6e }; // IV
-    memset(ivec,0,sizeof(DES_cblock));
 
     if((DES_is_weak_key(&key1) || DES_is_weak_key(&key2) || DES_is_weak_key(&key3)) == 1) {
         LOGE("Weak key...");
@@ -407,7 +432,7 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
             if (count_read < DES_BLOCK_SIZE)
                 break;
 
-
+            EVP_des_ede3_cbc();
             // encrypt 8 bytes from input_text to cipher
             DES_ede3_cbc_encrypt(input_text, cipher, count_read, &ks1, &ks2, &ks3, &ivec, DES_ENCRYPT);
             //DES_ecb3_encrypt(&input_data, &cipher, &SchKey1, &SchKey2, &SchKey3, DES_ENCRYPT);
@@ -430,10 +455,9 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
 
         return cipher_out;
     }
+    unsigned char *plain_out;
+    plain_out = new unsigned char[length];
     if(mode == DES_DECRYPT) {
-        unsigned char *plain_out;
-        plain_out = new unsigned char[length];
-
         int count_read = 0;
         int count_write = 0;
         int count_read_whole = 0;
@@ -490,21 +514,20 @@ Java_com_example_myapplication_MainActivity_encrypt3des(JNIEnv *env, jobject thi
                                                         jbyteArray plain_text) {
     jboolean isCopy;
     int plainText_len = env->GetArrayLength(plain_text);
-    jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
+    jbyte* temp = env->GetByteArrayElements(plain_text, &isCopy);
     const unsigned char* plainText;
     plainText = (unsigned char *) temp;
 
     for(int i = 0; i < plainText_len; ++i)
-        LOGI("PlainText[%d]: %02X", i, plainText[i]);
+        LOGI("PlainText[%d]: %c", i, plainText[i]);
 
     unsigned char* cipher_text = start3DES(plainText, plainText_len, DES_ENCRYPT);
     for(int i = 0; i < plainText_len; ++i)
-        LOGI("Cipher[%d]: %02X", i, cipher_text[i]);
+        LOGI("Cipher[%d]: %c", i, cipher_text[i]);
 
 
     jbyteArray ByteArray = env->NewByteArray(plainText_len);
-    env->SetByteArrayRegion(ByteArray, 0, plainText_len,
-                            reinterpret_cast<const jbyte *>(start3DES(plainText, plainText_len, 1)));
+    env->SetByteArrayRegion(ByteArray, 0, plainText_len,(jbyte*)cipher_text);
 
     return ByteArray;
 
@@ -521,11 +544,11 @@ Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thi
 
     unsigned char* plain = start3DES(encText, encText_len, DES_DECRYPT);
     for(int i = 0; i < encText_len; ++i)
-        LOGI("Plain[%d]: %02X", i, plain[i]);
+        LOGI("Plain[%d]: %c", i, plain[i]);
 
     //LOGI("TDES Dec: %s", plain_text);
     jbyteArray DecryptedByteArray = env->NewByteArray(encText_len);
-    env->SetByteArrayRegion(DecryptedByteArray, 0, encText_len, reinterpret_cast<const jbyte *>(start3DES(encText, encText_len, 0)));
+    env->SetByteArrayRegion(DecryptedByteArray, 0, encText_len, (jbyte*)plain);
 
     return DecryptedByteArray;
 }
@@ -777,3 +800,125 @@ Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thi
 //    return result;
 //}
 
+// ///////////////////////////////////// NEW 3DES EVP ///////////////////////////////////// //
+
+void select_random_key(unsigned char *key, int b)
+{
+    int i;
+
+    RAND_bytes(key, b);
+    for (i = 0; i < b - 1; i++)
+        printf("%02X:",key[i]);
+    printf("%02X\n\n", key[b - 1]);
+}
+
+void select_random_iv (unsigned char *iv, int b)
+{
+    RAND_pseudo_bytes (iv, b);
+}
+
+EVP_CIPHER_CTX *enc, *dec;
+
+// gen 256bit key
+int TDES_initialization(EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx) {
+    int i, nrounds = 32;
+    unsigned char key_data[EVP_MAX_KEY_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    select_random_key(key_data, EVP_MAX_KEY_LENGTH);
+    select_random_iv(iv, EVP_MAX_IV_LENGTH);
+//    i = EVP_BytesToKey(EVP_des_ede3_cbc(), EVP_sha1(), salt,key_data, EVP_MAX_KEY_LENGTH, nrounds, key_data, iv);
+//    if (i != 32) {
+//        LOGE("Key size is %d bits - should be %d bits\n", i, EVP_MAX_KEY_LENGTH);
+//        return -1;
+//    }
+
+    EVP_CIPHER_CTX_init(e_ctx);
+    EVP_EncryptInit(e_ctx, EVP_des_ede3_cbc(), key_data, iv);
+    EVP_CIPHER_CTX_init(d_ctx);
+    EVP_DecryptInit(d_ctx, EVP_des_ede3_cbc(), key_data, iv);
+
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_myapplication_MainActivity_new3DesEnc(JNIEnv *env, jobject thiz,
+                                                          jbyteArray plain_text) {
+    unsigned int salt[] = {12345, 54321};
+
+    jboolean isCopy;
+//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
+//    const char* key_data;
+//    key_data = (const char*) keyData;
+//    int key_data_len = strlen(key_data);
+
+    int plainText_len = env->GetArrayLength(plain_text);
+    jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
+    unsigned char* plainText;
+    plainText = (unsigned char*) temp;
+    //plainText_len = strlen((char*)plainText);
+
+    if( nullptr == plainText )
+        return nullptr;
+
+    unsigned char ciphertext[plainText_len];
+    int ciphertext_len = sizeof ciphertext;
+
+    enc = EVP_CIPHER_CTX_new();
+    dec = EVP_CIPHER_CTX_new();
+
+//    if (TDES_initialization((char*)key_data, EVP_MAX_KEY_LENGTH, (unsigned char *)salt, enc, dec)) {
+//        LOGE("Couldn't initialize AES cipher\n");
+//        LOGV("initializing aes failed");
+//        return nullptr;
+//    }
+    TDES_initialization(enc, dec);
+    LOGD("initializing 3DES success");
+
+    EVP_EncryptUpdate(enc, ciphertext, &ciphertext_len, plainText, plainText_len);
+    // EVP_EncryptFinal_ex(en, ciphertext, &ciphertext_len);
+    for(int i = 0; i < ciphertext_len; ++i) {
+        LOGI("EncryptedText[%d]: %c", i, ciphertext[i]);
+    }
+    // LOGV("EncryptedData: %s", ciphertext);
+    jbyteArray encryptedByteArray = env->NewByteArray(ciphertext_len);
+    env->SetByteArrayRegion(encryptedByteArray, 0, ciphertext_len, (jbyte *) ciphertext);
+
+    EVP_CIPHER_CTX_free(enc);
+
+    return encryptedByteArray;
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_myapplication_MainActivity_new3DesDec(JNIEnv *env, jobject thiz,
+                                                          jbyteArray enc_text) {
+    jboolean isCopy;
+//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
+//    const char* key_data;
+//    key_data = (const char*) keyData;
+//    int key_data_len = strlen(key_data);
+
+    jbyte* encryptedText = env->GetByteArrayElements(enc_text, &isCopy);
+    unsigned char * encText;
+    encText = (unsigned char*) encryptedText;
+    int encText_len = strlen((char*)encText);
+
+    unsigned char plaintext[encText_len];
+    int plaintext_len = sizeof plaintext;
+
+    //EVP_DecryptInit_ex(de, nullptr, nullptr, nullptr, nullptr);
+    EVP_DecryptUpdate(dec, plaintext, &plaintext_len, encText, encText_len);
+    //EVP_DecryptFinal_ex(de, plaintext, &plaintext_len);
+    for(int i = 0; i < plaintext_len; ++i) {
+        LOGV("DecryptedText[%d]: %c", i, plaintext[i]);
+    }
+    //LOGV("DecryptedText: %s", plaintext);
+
+    jbyteArray decryptedByteArray = env->NewByteArray(plaintext_len);
+    env->SetByteArrayRegion(decryptedByteArray, 0, plaintext_len, (jbyte *) plaintext);
+
+    EVP_CIPHER_CTX_free(dec);
+
+    return decryptedByteArray;
+}

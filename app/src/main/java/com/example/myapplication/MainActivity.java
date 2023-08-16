@@ -65,8 +65,10 @@ public class MainActivity extends AppCompatActivity {
     public native byte[] decryptAes256(byte[] key, byte[] encText);
     public native byte[] encrypt3des(byte[] plain_text);
     public native byte[] decrypt3des(byte[] encText);
-    public native byte[] publicEncryptRSA(String key, byte[] plainText);
-    public native byte[] privateDecryptRSA(String key, byte[] encText);
+    public native byte[] new3DesEnc(byte[] plain_text);
+    public native byte[] new3DesDec(byte[] encText);
+    public native byte[] EncryptRSA(String key, byte[] plainText, String mode);
+    public native byte[] DecryptRSA(String key, byte[] encText, String mode);
 
     //String publickey = new String(Files.readAllBytes(Paths.get("C:\\Users\\metho\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\cpp\\publickey.txt")), StandardCharsets.UTF_8);
     //String privatekey = new String(Files.readAllBytes(Paths.get("C:\\Users\\metho\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\cpp\\private.txt")), StandardCharsets.UTF_8);
@@ -148,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        setSupportActionBar(binding.toolbar);
+        //setSupportActionBar(binding.toolbar);
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
@@ -199,36 +201,37 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d(TAG, "onCreate: plainText = " + sb2.toString());
 
-//        byte[] encryptResultJava;
-//        byte[] encTextCplus;
-//        try {
-//            encryptResultJava = RSAEncrypt(plain);
-////            encTextCplus = publicencryptRsa(public_key, plainText);
-//            Log.d("BYTES", "Encrypted : " + Utils.encodeHex(encryptResultJava));
-////            Log.w("BYTES", Utils.encodeHex(encTextCplus));
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
+        byte[] encryptResultJava;
+        byte[] encTextCplus;
+        try {
+            encryptResultJava = RSAEncrypt(plain);
+//            encTextCplus = publicencryptRsa(private_key, plainText);
+            Log.d("BYTES", "Encrypted : " + Utils.encodeHex(encryptResultJava));
+//            Log.w("BYTES", Utils.encodeHex(encTextCplus));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         //byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
 //        byte [] encryptedText = encryptAes256(keyData, plainText);
 //        byte [] decryptedText = decryptAes256(keyData, encryptedText);
-          byte [] encText = publicEncryptRSA(public_key, plainText);
+          byte [] encText = EncryptRSA(private_key, plainText, "Private");
             sb2 = new StringBuilder();
             for (byte b : encText) {
                 sb2.append(String.format("%02X", b));
             }
             Log.d(TAG, "onCreate: encBa = " + sb2.toString());
-          byte[] decBa = privateDecryptRSA(private_key, encText);
+          byte[] decBa = DecryptRSA(public_key, encText, "Public");
         sb2 = new StringBuilder();
         for (byte b : decBa) {
             sb2.append(String.format("%02X", b));
         }
         Log.d(TAG, "onCreate: decBa = " + sb2.toString());
 
-        byte[] plainText1 = "c307d1e566991874".getBytes();// thqyeuipmloqsa12mloqsadf
-        byte[] t_des_encrypted = encrypt3des(plainText1);
-        decrypt3des(t_des_encrypted);
+//        byte[] plainText1 = "c307d1e566991874".getBytes();// thqyeuipmloqsa12mloqsadf  \\ c307d1e566991874
+//        byte[] t_des_encrypted = new3DesEnc(plainText1);
+//        new3DesDec(t_des_encrypted);
+
 //          String decStr = new String(decBa, StandardCharsets.UTF_8);
 //        Log.d(TAG, "onCreate: decStr = " + decStr);
         // plainTextHASH
