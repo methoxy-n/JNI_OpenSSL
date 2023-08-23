@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     public MainActivity() throws IOException {
     }
 
-    //    public native String invertMyString();
+//    public native String invertMyString();
 //    public native byte[] encrypt_w_aes(byte[] plainArray, int mode);
 //    public native byte[] decrypt_w_aes(byte[] plainArray, int mode);
 //    public native <string> byte[] StartingEncryption(string toEncrypt);
@@ -63,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
     public native byte[] calculateHash(byte[] plainArray);
     public native byte[] encryptAes256(byte[] key, byte[] plainText);
     public native byte[] decryptAes256(byte[] key, byte[] encText);
-    public native byte[] encrypt3des(byte[] plain_text);
-    public native byte[] decrypt3des(byte[] encText);
+    //public native byte[] encryptTripleDES(byte[] plain_text);
+    //public native byte[] decryptTripleDES(byte[] encText);
     public native byte[] new3DesEnc(byte[] plain_text);
     public native byte[] new3DesDec(byte[] encText);
     public native byte[] EncryptRSA(String key, byte[] plainText, String mode);
@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     //String publickey = new String(Files.readAllBytes(Paths.get("C:\\Users\\metho\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\cpp\\publickey.txt")), StandardCharsets.UTF_8);
     //String privatekey = new String(Files.readAllBytes(Paths.get("C:\\Users\\metho\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\cpp\\private.txt")), StandardCharsets.UTF_8);
 
+    // KEYS FOR RSA
     String public_key = "-----BEGIN PUBLIC KEY-----\n" +
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm1AThUE8dUz6x5DeDK3J\n" +
             "SKcBbqFVtplHCdf+036+2tZ1RmHcwsKZ6AF4dtCQ/8n+2lMQgdfWSe+gKEp2lIh0\n" +
@@ -110,39 +111,38 @@ public class MainActivity extends AppCompatActivity {
             "SftvM2TzsO9D8XemkOHNwayPMN6YQA3SDZTZNNv3LYD7NkqhRQI0YUo=\n" +
             "-----END RSA PRIVATE KEY-----";
 
-    public PublicKey getFromString(String keystr) throws Exception
-    {
-        // Remove the first and last lines
-
-        String pubKeyPEM = keystr.replace("-----BEGIN PUBLIC KEY-----\n", "");
-        pubKeyPEM = pubKeyPEM.replace("-----END PUBLIC KEY-----", "");
-
-        // Base64 decode the data
-
-        byte [] encoded = Base64.decode(pubKeyPEM, 0);
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        PublicKey pubkey = kf.generatePublic(keySpec);
-
-        return pubkey;
-    }
-    public byte[] RSAEncrypt(final String plain) throws Exception {
-        byte[] ba = new byte[256];
-        if (public_key != null) {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/NoPadding");
-            PublicKey pubKey = getFromString(public_key);
-            cipher.init(Cipher.ENCRYPT_MODE, pubKey);
-
-            byte[] ba1 = plain.getBytes(); // sdelat to je samoe na c++ взять заполеннный массив нулями и вначале кинуть ему плейн
-            Arrays.fill(ba, (byte) 0);
-            System.arraycopy(ba1, 0, ba, 0, ba1.length);
-            byte[] encryptedBytes = cipher.doFinal(ba);
-            Log.d("Base64Encrypted", new String(Base64.encode(encryptedBytes, 0)));
-            return encryptedBytes;
-        }
-        else
-            return null;
-    }
+//    public PublicKey getFromString(String keystr) throws Exception
+//    {
+//        // Remove the first and last lines
+//
+//        String pubKeyPEM = keystr.replace("-----BEGIN PUBLIC KEY-----\n", "");
+//        pubKeyPEM = pubKeyPEM.replace("-----END PUBLIC KEY-----", "");
+//
+//        // Base64 decode the data
+//
+//        byte [] encoded = Base64.decode(pubKeyPEM, 0);
+//        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
+//        KeyFactory kf = KeyFactory.getInstance("RSA");
+//        PublicKey pubkey = kf.generatePublic(keySpec);
+//        return pubkey;
+//    }
+//    public byte[] RSAEncrypt(final String plain) throws Exception {
+//        byte[] ba = new byte[256];
+//        if (public_key != null) {
+//            Cipher cipher = Cipher.getInstance("RSA/ECB/NoPadding");
+//            PublicKey pubKey = getFromString(public_key);
+//            cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+//
+//            byte[] ba1 = plain.getBytes(); // sdelat to je samoe na c++ взять заполеннный массив нулями и вначале кинуть ему плейн
+//            Arrays.fill(ba, (byte) 0);
+//            System.arraycopy(ba1, 0, ba, 0, ba1.length);
+//            byte[] encryptedBytes = cipher.doFinal(ba);
+//            Log.d("Base64Encrypted", new String(Base64.encode(encryptedBytes, 0)));
+//            return encryptedBytes;
+//        }
+//        else
+//            return null;
+//    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        //setSupportActionBar(binding.toolbar);
+        setSupportActionBar(binding.toolbar);
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
@@ -195,42 +195,81 @@ public class MainActivity extends AppCompatActivity {
         /* *********** AES_256 ENC/DEC ********** */
             byte[] plainText = "TXaxsOMjDo6sN1B7VnImbnHLCXQ9wVDEfDJgI8bRlqB63ZqDE5wpJcEAjYOTkmjBwmSRmP0AuuSyJpmKGB0JPMzD2MSu3NKwauD1O64en684yBiMOhP6TzLDlMu6eKkmc7DOT1rBKK1HinLK5SOituqtMZCfJL5sWQCpzTpAjzWlIvZbmdaOw8ernenzrVJXIm7mta2FP9YQlpgcB6EeBNG4sRY8fGjxwhawBWuhV7a1XgvbBPZFA".getBytes(StandardCharsets.UTF_8);
             String plain = "TXaxsOMjDo6sN1B7VnImbnHLCXQ9wVDEfDJgI8bRlqB63ZqDE5wpJcEAjYOTkmjBwmSRmP0AuuSyJpmKGB0JPMzD2MSu3NKwauD1O64en684yBiMOhP6TzLDlMu6eKkmc7DOT1rBKK1HinLK5SOituqtMZCfJL5sWQCpzTpAjzWlIvZbmdaOw8ernenzrVJXIm7mta2FP9YQlpgcB6EeBNG4sRY8fGjxwhawBWuhV7a1XgvbBPZFA";
-        StringBuilder sb2 = new StringBuilder();
+//        StringBuilder sb2 = new StringBuilder();
+//        for (byte b : plainText) {
+//            sb2.append(String.format("%02X", b));
+//        }
+//        Log.d(TAG, "onCreate: plainText = " + sb2.toString());
+//
+//        byte[] encryptResultJava;
+//        byte[] encTextCplus;
+//        try {
+//            encryptResultJava = RSAEncrypt(plain);
+////            encTextCplus = publicencryptRsa(private_key, plainText);
+//            Log.d("BYTES", "Encrypted : " + Utils.encodeHex(encryptResultJava));
+////            Log.w("BYTES", Utils.encodeHex(encTextCplus));
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+        byte[] rsa_encrypted = EncryptRSA(private_key, plainText, "Private");
+        byte[] rsa_decrypted = DecryptRSA(public_key, rsa_encrypted, "Public");
+        StringBuilder sb3 = new StringBuilder();
         for (byte b : plainText) {
-            sb2.append(String.format("%02X", b));
+            sb3.append(String.format("%02X", b));
         }
-        Log.d(TAG, "onCreate: plainText = " + sb2.toString());
+        Log.d(TAG, "onCreate: PlainTextBA = " + sb3);
 
-        byte[] encryptResultJava;
-        byte[] encTextCplus;
-        try {
-            encryptResultJava = RSAEncrypt(plain);
-//            encTextCplus = publicencryptRsa(private_key, plainText);
-            Log.d("BYTES", "Encrypted : " + Utils.encodeHex(encryptResultJava));
-//            Log.w("BYTES", Utils.encodeHex(encTextCplus));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        StringBuilder sb4 = new StringBuilder();
+        for (byte b : rsa_encrypted) {
+            sb4.append(String.format("%02X", b));
         }
+        Log.d(TAG, "onCreate: EncryptedTextBA = " + sb4);
 
-        //byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
+        StringBuilder sb5 = new StringBuilder();
+        for (byte b : rsa_decrypted) {
+            sb5.append(String.format("%02X", b));
+        }
+        Log.d(TAG, "onCreate: DecryptedTextBA = " + sb5);
+
+//        Log.d(TAG, "onCreate: plainText = " + sb2.toString());
+//        byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
 //        byte [] encryptedText = encryptAes256(keyData, plainText);
 //        byte [] decryptedText = decryptAes256(keyData, encryptedText);
-          byte [] encText = EncryptRSA(private_key, plainText, "Private");
-            sb2 = new StringBuilder();
-            for (byte b : encText) {
-                sb2.append(String.format("%02X", b));
-            }
-            Log.d(TAG, "onCreate: encBa = " + sb2.toString());
-          byte[] decBa = DecryptRSA(public_key, encText, "Public");
-        sb2 = new StringBuilder();
-        for (byte b : decBa) {
-            sb2.append(String.format("%02X", b));
-        }
-        Log.d(TAG, "onCreate: decBa = " + sb2.toString());
+//          byte [] encText = EncryptRSA(private_key, plainText, "Private");
+//            sb2 = new StringBuilder();
+//            for (byte b : encText) {
+//                sb2.append(String.format("%02X", b));
+//            }
+//            Log.d(TAG, "onCreate: encBa = " + sb2.toString());
+//          byte[] decBa = DecryptRSA(public_key, encText, "Public");
+//        sb2 = new StringBuilder();
+//        for (byte b : decBa) {
+//            sb2.append(String.format("%02X", b));
+//        }
+//        Log.d(TAG, "onCreate: decBa = " + sb2.toString());
 
-//        byte[] plainText1 = "c307d1e566991874".getBytes();// thqyeuipmloqsa12mloqsadf  \\ c307d1e566991874
-//        byte[] t_des_encrypted = new3DesEnc(plainText1);
-//        new3DesDec(t_des_encrypted);
+        /* ********** T_DES CHECK ********** */
+//        byte[] plainText1 = "k-D46dK)#+{Vf&xG@_B!_XZ]C&p2}52S@j)!2RMP-b9dcmB2phrQmzH:tPX.q!5:".getBytes();// thqyeuipmloqsa12mloqsadf  \\ c307d1e566991874
+//        byte[] t_des_encrypted = encryptTripleDES(plainText1);
+//        byte[] t_des_decrypted = decryptTripleDES(t_des_encrypted);
+//
+//        StringBuilder sb3 = new StringBuilder();
+//        for (byte b : plainText1) {
+//            sb3.append(String.format("%02X", b));
+//        }
+//        Log.d(TAG, "onCreate: PlainTextBA = " + sb3);
+//
+//        StringBuilder sb4 = new StringBuilder();
+//        for (byte b : t_des_encrypted) {
+//            sb4.append(String.format("%02X", b));
+//        }
+//        Log.d(TAG, "onCreate: EncryptedTextBA = " + sb4);
+//
+//        StringBuilder sb5 = new StringBuilder();
+//        for (byte b : t_des_decrypted) {
+//            sb5.append(String.format("%02X", b));
+//        }
+//        Log.d(TAG, "onCreate: DecryptedTextBA = " + sb5);
 
 //          String decStr = new String(decBa, StandardCharsets.UTF_8);
 //        Log.d(TAG, "onCreate: decStr = " + decStr);

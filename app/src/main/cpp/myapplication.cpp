@@ -1,21 +1,4 @@
-#include <jni.h>
-#include <string>
-#include <mntent.h>
-#include <unistd.h>
-#include <cstdio>
-
-#include "logdebug.h"
-#include "openssl/rand.h"
-#include "openssl/sha.h"
-#include "openssl/aes.h"
-#include "openssl/evp.h"
-#include "openssl/ossl_typ.h"
-#include "openssl/rsa.h"
-#include "openssl/pem.h"
-#include "openssl/err.h"
-#include "openssl/bio.h"
-#include "openssl/ssl.h"
-#include "openssl/des.h"
+#include "tools_openssl.h"
 
 /********************************* SHA-256 *********************************/
 extern "C"
@@ -160,141 +143,30 @@ Java_com_example_myapplication_MainActivity_decryptAes256(JNIEnv *env, jobject t
 /********************************* END AES *********************************/
 
 /********************************* RSA ENC/DEC *********************************/
-
-//RSA * createRSA(unsigned char* key, int mode) {
-//    RSA *rsa= NULL;
-//    BIO *keybio ;
-//    keybio = BIO_new_mem_buf(key, -1);
-//    if (keybio==NULL)
-//    {
-//        LOGE( "Failed to create key BIO");
-//        return 0;
-//    }
-//    if(mode)
-//    {
-//        rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
-//    }
-//    else
-//    {
-//        rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa,NULL, NULL);
-//    }
-//
-//    return rsa;
-//}
-
-RSA * createRSApub(std::string sKey) {
-     //std::string sKey((char*) key);
-//    replace_first(sKey, "-----BEGIN RSA PUBLIC KEY-----", "");
-//    replace_first(sKey, "-----END RSA PUBLIC KEY-----", "");
-     RSA *rsa = nullptr;
-     BIO *keybio; //  BIO_new( BIO_s_mem() );
-//     BIO_write( keybio, sKey.c_str(),sKey.length());
-     keybio = BIO_new_mem_buf(sKey.c_str(), sKey.length());
-
-    if (keybio == nullptr) {
-        printf( "Failed to create key BIO");
-        return nullptr;
-    }
-//    if (mode) {
-//        RSA *rsa = nullptr;
-    else  rsa = PEM_read_bio_RSA_PUBKEY(keybio, nullptr,nullptr, nullptr);
-//        RSA* public_key;
-//        BIO* bo = BIO_new(BIO_s_mem());
-//        BIO_write(bo, sKey.c_str(), sKey.length());
-//        RSA* rsa = PEM_read_bio_RSA_PUBKEY(bo, &public_key, nullptr, nullptr);;
-//        return rsa;
-//    }
-//    else {
-//        EVP_PKEY* pkey = 0;
-//        PEM_read_bio_PrivateKey(keybio, &pkey,nullptr, nullptr);
-//        RSA* rsa = EVP_PKEY_get1_RSA(pkey);
-//        rsa = PEM_read_bio_RSAPrivateKey(keybio, nullptr,nullptr, nullptr);
-//        LOGI("RSA_check_key(rsa) = %d", RSA_check_key(rsa));
-//        return rsa;
-//    }
-//    BIO_free(keybio);
-
-    return rsa;
-}
-
-RSA * createRSApriv(std::string sKey) {
-    //std::string sKey((char*) key);
-//    replace_first(sKey, "-----BEGIN RSA PRIVATE KEY-----", "");
-//    replace_first(sKey, "-----END RSA PRIVATE KEY-----", "");
-    RSA *rsa = nullptr;
-    BIO *keybio; //  BIO_new( BIO_s_mem() );
-//     BIO_write( keybio, sKey.c_str(),sKey.length());
-    keybio = BIO_new_mem_buf(sKey.c_str(), sKey.length());
-
-    if (keybio == nullptr) {
-        printf( "Failed to create key BIO");
-        return nullptr;
-    }
-    else rsa = PEM_read_bio_RSAPrivateKey(keybio, nullptr,nullptr, nullptr);
-    LOGI("RSA_check_key(rsa) = %d", RSA_check_key(rsa));
-    return rsa;
-}
-
 extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_com_example_myapplication_MainActivity_EncryptRSA(JNIEnv *env, jobject thiz, jstring key,
                                                        jbyteArray plain_text, jstring mode) {
       jboolean isCopy;
-//    jbyte* keyData = env->GetByteArrayElements(public_key, &isCopy);
-//    const char* key_data;
-//    key_data = (const char*) keyData;
-//    int key_data_len = strlen(key_data);
     unsigned char *key_data = (unsigned char *) (env)->GetStringUTFChars(key, &isCopy);
     std::string sKey((char*) key_data);
-   // int key_data_len = strlen((char*)key_data);
-//    std::string key_data_string = std::string(key_data, key_data_len);
+
 
     int plainText_len = env->GetArrayLength(plain_text);
     jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
     unsigned char* plainText;
     plainText = (unsigned char *) temp;
-//    plainText_len = strlen((char*)plainText);
+
 
     unsigned char *enc_mode = (unsigned char *) (env)->GetStringUTFChars(mode, &isCopy);
     std::string s_mode((char*) enc_mode);
 
-    if(nullptr == plainText)
-        return nullptr;
+    utils_openssl to_encrypt(plainText, plainText_len, sKey);
+    to_encrypt.encryptRSA(to_encrypt, s_mode);
+    //utils_openssl encrypted_mes(to_encrypt);
 
-    LOGV("The data to encrypt is: %s", plainText);
-
-    unsigned char chEncryptedData[256] = {};
-    int chEncryptedData_len = sizeof chEncryptedData;
-    //for(int i = 0; i < chEncryptedData_len; ++i) chEncryptedData[i] = 0;
-
-    std::string pub_mode((char*) "Public");
-    std::string priv_mode((char*) "Private");
-
-    int iResult;
-
-    if(s_mode == pub_mode)
-        iResult = RSA_public_encrypt(plainText_len, plainText, chEncryptedData, createRSApub(sKey), RSA_PKCS1_PADDING);
-    if(s_mode == priv_mode)
-        iResult = RSA_private_encrypt(plainText_len, plainText, chEncryptedData, createRSApriv(sKey), RSA_PKCS1_PADDING);
-    else LOGE("Choose right mode --- Public / Private");
-//    env->ReleaseStringUTFChars(env, inData, cData);
-
-// If encryption fails, returns nullptr string, else returns encrypted string
-
-    if(-1 == iResult) {
-        char *chErrMsg = (char*)malloc(256);
-        ERR_load_crypto_strings();
-        ERR_error_string(ERR_get_error(), chErrMsg);
-        LOGE("The data Encryption failed due to the reason : %s", chErrMsg);
-        free(chErrMsg);
-        return nullptr;
-    }
-    std::string encd((char*) chEncryptedData);
-
-        LOGD("The Encrypted data is: %s", chEncryptedData);
-
-    jbyteArray EncryptedByteArray = env->NewByteArray(iResult);
-    env->SetByteArrayRegion(EncryptedByteArray, 0, iResult, (jbyte *) chEncryptedData);
+    jbyteArray EncryptedByteArray = env->NewByteArray(to_encrypt.encrypted_len);
+    env->SetByteArrayRegion(EncryptedByteArray, 0, to_encrypt.encrypted_len, (jbyte *) to_encrypt.encrypted_text);
 
     return EncryptedByteArray;
 }
@@ -311,51 +183,145 @@ Java_com_example_myapplication_MainActivity_DecryptRSA(JNIEnv *env, jobject thiz
 
     int encText_len = env->GetArrayLength(enc_text);
     jbyte* a = env->GetByteArrayElements(enc_text,&isCopy);
-    const unsigned char* encText;
+    unsigned char* encText;
     encText = (unsigned char *) a;
 
     unsigned char *enc_mode = (unsigned char *) (env)->GetStringUTFChars(mode, &isCopy);
     std::string s_mode((char*) enc_mode);
 
-    //encText_len = strlen((char*)encText);
+    utils_openssl to_decrypt(encText, encText_len, sKey);
+    to_decrypt.decryptRSA(to_decrypt, s_mode);
 
-   // RSA* myRSA = RSA_generate_key_ex(2048, 65537, NULL, NULL);
-
-    //RSA * rsa = createRSA(key_data,1);
-
-    unsigned char chDecryptedData[256] = {};
-    int chDecryptedData_len = sizeof chDecryptedData;
-
-    std::string pub_mode((char*) "Public");
-    std::string priv_mode((char*) "Private");
-
-    int result;
-
-    if(s_mode == pub_mode)
-        result = RSA_public_decrypt(chDecryptedData_len,encText, chDecryptedData, createRSApub(sKey), RSA_PKCS1_PADDING);
-    if(s_mode == priv_mode)
-        result = RSA_private_decrypt(chDecryptedData_len,encText, chDecryptedData, createRSApriv(sKey), RSA_PKCS1_PADDING);
-    else
-        LOGE("Choose right mode --- Public / Private");
-
-    if(-1 == result) {
-        char *chErrMsg = (char*)malloc(256);
-        ERR_load_crypto_strings();
-        ERR_error_string(ERR_get_error(), chErrMsg);
-        LOGE("The data Decryption failed due to the reason : %s", chErrMsg);
-        free(chErrMsg);
-        return nullptr;
-    }
-        LOGD("The Decrypted data is: %s", chDecryptedData);
-
-    jbyteArray DecryptedByteArray = env->NewByteArray(result);
-    env->SetByteArrayRegion(DecryptedByteArray, 0, result, (jbyte *) chDecryptedData);
+    jbyteArray DecryptedByteArray = env->NewByteArray(to_decrypt.decrypted_len);
+    env->SetByteArrayRegion(DecryptedByteArray, 0, to_decrypt.decrypted_len, (jbyte *) to_decrypt.decrypted_text);
 
     return DecryptedByteArray;
 }
 /********************************* END RSA *********************************/
 
-/********************************* START 3DES *********************************/
+/********************************* START 3DES (WORKS) *********************************/
+void select_random_key(unsigned char *key, int b) {
+    int i;
+    RAND_bytes(key, b);
+    for (i = 0; i < b - 1; i++)
+        printf("%02X:",key[i]);
+    printf("%02X\n\n", key[b - 1]);
+}
+
+void select_random_iv (unsigned char *iv, int b) {
+    RAND_bytes (iv, b);
+}
+
+EVP_CIPHER_CTX *enc, *dec;
+
+// gen 256bit key
+int TDES_initialization(EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx) {
+//    int i, nrounds = 32;
+    unsigned char key_data[EVP_MAX_KEY_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+
+    select_random_key(key_data, EVP_MAX_KEY_LENGTH);
+    select_random_iv(iv, EVP_MAX_IV_LENGTH);
+
+//    i = EVP_BytesToKey(EVP_des_ede3_cbc(), EVP_sha1(), salt,key_data, EVP_MAX_KEY_LENGTH, nrounds, key_data, iv);
+//    if (i != 32) {
+//        LOGE("Key size is %d bits - should be %d bits\n", i, EVP_MAX_KEY_LENGTH);
+//        return -1;
+//    }
+
+    EVP_CIPHER_CTX_init(e_ctx);
+    EVP_EncryptInit(e_ctx, EVP_des_ede3_cbc(), key_data, iv);
+    EVP_CIPHER_CTX_init(d_ctx);
+    EVP_DecryptInit(d_ctx, EVP_des_ede3_cbc(), key_data, iv);
+
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_myapplication_MainActivity_new3DesEnc(JNIEnv *env, jobject thiz,
+                                                       jbyteArray plain_text) {
+    unsigned int salt[] = {12345, 54321};
+
+    jboolean isCopy;
+//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
+//    const char* key_data;
+//    key_data = (const char*) keyData;
+//    int key_data_len = strlen(key_data);
+
+    int plainText_len = env->GetArrayLength(plain_text);
+    jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
+    unsigned char* plainText;
+    plainText = (unsigned char*) temp;
+    //plainText_len = strlen((char*)plainText);
+
+    if(nullptr == plainText)
+        return nullptr;
+
+    unsigned char ciphertext[plainText_len];
+    int ciphertext_len = sizeof ciphertext;
+
+    enc = EVP_CIPHER_CTX_new();
+    dec = EVP_CIPHER_CTX_new();
+
+//    if (TDES_initialization((char*)key_data, EVP_MAX_KEY_LENGTH, (unsigned char *)salt, enc, dec)) {
+//        LOGE("Couldn't initialize AES cipher\n");
+//        LOGV("initializing aes failed");
+//        return nullptr;
+//    }
+    TDES_initialization(enc, dec);
+    LOGD("initializing 3DES success");
+
+    EVP_EncryptUpdate(enc, ciphertext, &ciphertext_len, plainText, plainText_len);
+    // EVP_EncryptFinal_ex(en, ciphertext, &ciphertext_len);
+//    for(int i = 0; i < ciphertext_len; ++i) {
+//        LOGI("EncryptedText[%d]: %c", i, ciphertext[i]);
+//    }
+    // LOGV("EncryptedData: %s", ciphertext);
+    jbyteArray encryptedByteArray = env->NewByteArray(ciphertext_len);
+    env->SetByteArrayRegion(encryptedByteArray, 0, ciphertext_len, (jbyte *) ciphertext);
+
+    EVP_CIPHER_CTX_free(enc);
+
+    return encryptedByteArray;
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_myapplication_MainActivity_new3DesDec(JNIEnv *env, jobject thiz,
+                                                       jbyteArray enc_text) {
+    jboolean isCopy;
+//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
+//    const char* key_data;
+//    key_data = (const char*) keyData;
+//    int key_data_len = strlen(key_data);
+
+    jbyte* encryptedText = env->GetByteArrayElements(enc_text, &isCopy);
+    unsigned char * encText;
+    encText = (unsigned char*) encryptedText;
+    int encText_len = strlen((char*)encText);
+
+    unsigned char plaintext[encText_len];
+    int plaintext_len = sizeof plaintext;
+
+    //EVP_DecryptInit_ex(de, nullptr, nullptr, nullptr, nullptr);
+    EVP_DecryptUpdate(dec, plaintext, &plaintext_len, encText, encText_len);
+    //EVP_DecryptFinal_ex(de, plaintext, &plaintext_len);
+//    for(int i = 0; i < plaintext_len; ++i) {
+//        LOGV("DecryptedText[%d]: %c", i, plaintext[i]);
+//    }
+    //LOGV("DecryptedText: %s", plaintext);
+
+    jbyteArray decryptedByteArray = env->NewByteArray(plaintext_len);
+    env->SetByteArrayRegion(decryptedByteArray, 0, plaintext_len, (jbyte *) plaintext);
+
+    EVP_CIPHER_CTX_free(dec);
+
+    return decryptedByteArray;
+}
+/********************************* END 3DES (WORKS) *********************************/
+
+/********************************* START 3DES (NOT WORKING) *********************************/
 #define DES_BLOCK_SIZE 8
 
 unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 1 - encryption | 0 - decryption
@@ -475,7 +441,6 @@ unsigned char* start3DES (const unsigned char* text, int length, int mode) { // 
                 }
                 break;
             }
-
 
             if (count_read < DES_BLOCK_SIZE)
                 break;
@@ -800,125 +765,3 @@ Java_com_example_myapplication_MainActivity_decrypt3des(JNIEnv *env, jobject thi
 //    return result;
 //}
 
-// ///////////////////////////////////// NEW 3DES EVP ///////////////////////////////////// //
-
-void select_random_key(unsigned char *key, int b)
-{
-    int i;
-
-    RAND_bytes(key, b);
-    for (i = 0; i < b - 1; i++)
-        printf("%02X:",key[i]);
-    printf("%02X\n\n", key[b - 1]);
-}
-
-void select_random_iv (unsigned char *iv, int b)
-{
-    RAND_pseudo_bytes (iv, b);
-}
-
-EVP_CIPHER_CTX *enc, *dec;
-
-// gen 256bit key
-int TDES_initialization(EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx) {
-    int i, nrounds = 32;
-    unsigned char key_data[EVP_MAX_KEY_LENGTH];
-    unsigned char iv[EVP_MAX_IV_LENGTH];
-    select_random_key(key_data, EVP_MAX_KEY_LENGTH);
-    select_random_iv(iv, EVP_MAX_IV_LENGTH);
-//    i = EVP_BytesToKey(EVP_des_ede3_cbc(), EVP_sha1(), salt,key_data, EVP_MAX_KEY_LENGTH, nrounds, key_data, iv);
-//    if (i != 32) {
-//        LOGE("Key size is %d bits - should be %d bits\n", i, EVP_MAX_KEY_LENGTH);
-//        return -1;
-//    }
-
-    EVP_CIPHER_CTX_init(e_ctx);
-    EVP_EncryptInit(e_ctx, EVP_des_ede3_cbc(), key_data, iv);
-    EVP_CIPHER_CTX_init(d_ctx);
-    EVP_DecryptInit(d_ctx, EVP_des_ede3_cbc(), key_data, iv);
-
-    return 0;
-}
-
-extern "C"
-JNIEXPORT jbyteArray JNICALL
-Java_com_example_myapplication_MainActivity_new3DesEnc(JNIEnv *env, jobject thiz,
-                                                          jbyteArray plain_text) {
-    unsigned int salt[] = {12345, 54321};
-
-    jboolean isCopy;
-//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
-//    const char* key_data;
-//    key_data = (const char*) keyData;
-//    int key_data_len = strlen(key_data);
-
-    int plainText_len = env->GetArrayLength(plain_text);
-    jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
-    unsigned char* plainText;
-    plainText = (unsigned char*) temp;
-    //plainText_len = strlen((char*)plainText);
-
-    if( nullptr == plainText )
-        return nullptr;
-
-    unsigned char ciphertext[plainText_len];
-    int ciphertext_len = sizeof ciphertext;
-
-    enc = EVP_CIPHER_CTX_new();
-    dec = EVP_CIPHER_CTX_new();
-
-//    if (TDES_initialization((char*)key_data, EVP_MAX_KEY_LENGTH, (unsigned char *)salt, enc, dec)) {
-//        LOGE("Couldn't initialize AES cipher\n");
-//        LOGV("initializing aes failed");
-//        return nullptr;
-//    }
-    TDES_initialization(enc, dec);
-    LOGD("initializing 3DES success");
-
-    EVP_EncryptUpdate(enc, ciphertext, &ciphertext_len, plainText, plainText_len);
-    // EVP_EncryptFinal_ex(en, ciphertext, &ciphertext_len);
-    for(int i = 0; i < ciphertext_len; ++i) {
-        LOGI("EncryptedText[%d]: %c", i, ciphertext[i]);
-    }
-    // LOGV("EncryptedData: %s", ciphertext);
-    jbyteArray encryptedByteArray = env->NewByteArray(ciphertext_len);
-    env->SetByteArrayRegion(encryptedByteArray, 0, ciphertext_len, (jbyte *) ciphertext);
-
-    EVP_CIPHER_CTX_free(enc);
-
-    return encryptedByteArray;
-}
-
-extern "C"
-JNIEXPORT jbyteArray JNICALL
-Java_com_example_myapplication_MainActivity_new3DesDec(JNIEnv *env, jobject thiz,
-                                                          jbyteArray enc_text) {
-    jboolean isCopy;
-//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
-//    const char* key_data;
-//    key_data = (const char*) keyData;
-//    int key_data_len = strlen(key_data);
-
-    jbyte* encryptedText = env->GetByteArrayElements(enc_text, &isCopy);
-    unsigned char * encText;
-    encText = (unsigned char*) encryptedText;
-    int encText_len = strlen((char*)encText);
-
-    unsigned char plaintext[encText_len];
-    int plaintext_len = sizeof plaintext;
-
-    //EVP_DecryptInit_ex(de, nullptr, nullptr, nullptr, nullptr);
-    EVP_DecryptUpdate(dec, plaintext, &plaintext_len, encText, encText_len);
-    //EVP_DecryptFinal_ex(de, plaintext, &plaintext_len);
-    for(int i = 0; i < plaintext_len; ++i) {
-        LOGV("DecryptedText[%d]: %c", i, plaintext[i]);
-    }
-    //LOGV("DecryptedText: %s", plaintext);
-
-    jbyteArray decryptedByteArray = env->NewByteArray(plaintext_len);
-    env->SetByteArrayRegion(decryptedByteArray, 0, plaintext_len, (jbyte *) plaintext);
-
-    EVP_CIPHER_CTX_free(dec);
-
-    return decryptedByteArray;
-}
