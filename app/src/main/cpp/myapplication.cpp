@@ -1,4 +1,4 @@
-#include "tools_openssl.h"
+#include "openssl_rsa.h"
 
 /********************************* SHA-256 *********************************/
 extern "C"
@@ -161,9 +161,9 @@ Java_com_example_myapplication_MainActivity_EncryptRSA(JNIEnv *env, jobject thiz
     unsigned char *enc_mode = (unsigned char *) (env)->GetStringUTFChars(mode, &isCopy);
     std::string s_mode((char*) enc_mode);
 
-    utils_openssl to_encrypt(plainText, plainText_len, sKey);
+    openssl_rsa to_encrypt(plainText, plainText_len, sKey);
     to_encrypt.encryptRSA(to_encrypt, s_mode);
-    //utils_openssl encrypted_mes(to_encrypt);
+    //openssl_rsa encrypted_mes(to_encrypt);
 
     jbyteArray EncryptedByteArray = env->NewByteArray(to_encrypt.encrypted_len);
     env->SetByteArrayRegion(EncryptedByteArray, 0, to_encrypt.encrypted_len, (jbyte *) to_encrypt.encrypted_text);
@@ -189,7 +189,7 @@ Java_com_example_myapplication_MainActivity_DecryptRSA(JNIEnv *env, jobject thiz
     unsigned char *enc_mode = (unsigned char *) (env)->GetStringUTFChars(mode, &isCopy);
     std::string s_mode((char*) enc_mode);
 
-    utils_openssl to_decrypt(encText, encText_len, sKey);
+    openssl_rsa to_decrypt(encText, encText_len, sKey);
     to_decrypt.decryptRSA(to_decrypt, s_mode);
 
     jbyteArray DecryptedByteArray = env->NewByteArray(to_decrypt.decrypted_len);

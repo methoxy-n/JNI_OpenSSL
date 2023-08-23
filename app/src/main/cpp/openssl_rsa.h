@@ -2,8 +2,8 @@
 // Created by metho on 21.08.2023.
 //
 
-#ifndef MY_APPLICATION_TOOLS_OPENSSL_H
-#define MY_APPLICATION_TOOLS_OPENSSL_H
+#ifndef MY_APPLICATION_OPENSSL_RSA_H
+#define MY_APPLICATION_OPENSSL_RSA_H
 
 #include <jni.h>
 #include <string>
@@ -24,7 +24,7 @@
 #include "openssl/ssl.h"
 #include "openssl/des.h"
 
-class utils_openssl {
+class openssl_rsa {
 public:
     unsigned char* text;
     unsigned char* encrypted_text;
@@ -34,7 +34,7 @@ public:
     int decrypted_len;
     std::string key;
 
-    utils_openssl() {
+    openssl_rsa() {
         text = nullptr;
         encrypted_text = nullptr;
         decrypted_text = nullptr;
@@ -44,7 +44,7 @@ public:
         key = "";
     }
 
-    utils_openssl(unsigned char* other_text, int length, std::string key1) {
+    openssl_rsa(unsigned char* other_text, int length, std::string key1) {
         text = new unsigned char[length];
         text = other_text;
         encrypted_text = new unsigned char [256];
@@ -55,7 +55,7 @@ public:
         key = key1;
     }
 
-    utils_openssl& operator = (const utils_openssl& other) {
+    openssl_rsa& operator = (const openssl_rsa& other) {
         if(this != &other) {
             text = other.text;
             text = other.text;
@@ -71,7 +71,7 @@ public:
         return *this;
     }
 
-    utils_openssl(const utils_openssl& other) {
+    openssl_rsa(const openssl_rsa& other) {
         text = other.text;
         text = other.text;
         encrypted_text = other.encrypted_text;
@@ -84,10 +84,10 @@ public:
 
     RSA * createRSApriv(std::string sKey);
     RSA * createRSApub(std::string sKey);
-    unsigned char* encryptRSA(utils_openssl set_of_data, std::string mode);
-    unsigned char* decryptRSA(utils_openssl set_of_data, std::string mode);
+    unsigned char* encryptRSA(openssl_rsa set_of_data, std::string mode);
+    unsigned char* decryptRSA(openssl_rsa set_of_data, std::string mode);
 
-//    ~utils_openssl() {
+//    ~openssl_rsa() {
 //        delete[] text;
 //        text = nullptr;
 //        delete[] encrypted_text;
@@ -97,4 +97,4 @@ public:
 //    };
 };
 
-#endif //MY_APPLICATION_TOOLS_OPENSSL_H
+#endif //MY_APPLICATION_OPENSSL_RSA_H

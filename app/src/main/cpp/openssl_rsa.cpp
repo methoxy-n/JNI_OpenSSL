@@ -2,11 +2,11 @@
 // Created by metho on 18.08.2023.
 //
 
-#include "tools_openssl.h"
+#include "openssl_rsa.h"
 
 /********************************* RSA ENC/DEC *********************************/
 
-RSA *utils_openssl::createRSApriv(std::string sKey) {
+RSA *openssl_rsa::createRSApriv(std::string sKey) {
     RSA *rsa = nullptr;
     BIO *keybio;
     keybio = BIO_new_mem_buf(sKey.c_str(), sKey.length());
@@ -22,7 +22,7 @@ RSA *utils_openssl::createRSApriv(std::string sKey) {
 
     return rsa;
 }
-RSA *utils_openssl::createRSApub(std::string sKey) {
+RSA *openssl_rsa::createRSApub(std::string sKey) {
     RSA *rsa = nullptr;
     BIO *keybio;
     keybio = BIO_new_mem_buf(sKey.c_str(), sKey.length());
@@ -36,7 +36,7 @@ RSA *utils_openssl::createRSApub(std::string sKey) {
     return rsa;
 }
 
-unsigned char* utils_openssl::encryptRSA(utils_openssl plain, std::string mode) {
+unsigned char* openssl_rsa::encryptRSA(openssl_rsa plain, std::string mode) {
     //unsigned char* plain_text = plain;
 
     if(text == nullptr) {
@@ -83,7 +83,7 @@ unsigned char* utils_openssl::encryptRSA(utils_openssl plain, std::string mode) 
     return encrypted_text;
 }
 
-unsigned char* utils_openssl::decryptRSA(utils_openssl set_of_data, std::string mode) {
+unsigned char* openssl_rsa::decryptRSA(openssl_rsa set_of_data, std::string mode) {
 //    unsigned char chDecryptedData[256];
 //    int chDecryptedData_len = sizeof chDecryptedData;
 
