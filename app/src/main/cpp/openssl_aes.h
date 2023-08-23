@@ -1,9 +1,9 @@
 //
-// Created by metho on 21.08.2023.
+// Created by metho on 23.08.2023.
 //
 
-#ifndef MY_APPLICATION_OPENSSL_RSA_H
-#define MY_APPLICATION_OPENSSL_RSA_H
+#ifndef MY_APPLICATION_OPENSSL_AES_H
+#define MY_APPLICATION_OPENSSL_AES_H
 
 #include <jni.h>
 #include <string>
@@ -12,12 +12,13 @@
 #include <cstdio>
 
 #include "logdebug.h"
-#include "openssl/rsa.h"
+#include "openssl/aes.h"
+#include "openssl/evp.h"
 #include "openssl/err.h"
-#include "openssl/ssl.h"
+#include "openssl/bio.h"
 
 
-class openssl_rsa {
+class openssl_aes {
 public:
     unsigned char* text;
     unsigned char* encrypted_text;
@@ -25,9 +26,9 @@ public:
     int text_len;
     int encrypted_len;
     int decrypted_len;
-    std::string key;
+    const char* key;
 
-    openssl_rsa() {
+    openssl_aes() {
         text = nullptr;
         encrypted_text = nullptr;
         decrypted_text = nullptr;
@@ -37,7 +38,7 @@ public:
         key = "";
     }
 
-    openssl_rsa(unsigned char* other_text, int length, std::string key1) {
+    openssl_aes(unsigned char* other_text, int length, const char* key1) {
         text = new unsigned char[length];
         text = other_text;
         encrypted_text = new unsigned char [256];
@@ -48,7 +49,7 @@ public:
         key = key1;
     }
 
-    openssl_rsa& operator = (const openssl_rsa& other) {
+    openssl_aes& operator = (const openssl_aes& other) {
         if(this != &other) {
             delete[] text;
             delete[] encrypted_text;
@@ -66,7 +67,7 @@ public:
         return *this;
     }
 
-    openssl_rsa(const openssl_rsa& other) {
+    openssl_aes(const openssl_aes& other) {
         text = other.text;
         encrypted_text = other.encrypted_text;
         decrypted_text = other.decrypted_text;
@@ -76,19 +77,10 @@ public:
         key = other.key;
     }
 
-    RSA * createRSApriv(std::string sKey);
-    RSA * createRSApub(std::string sKey);
-    unsigned char* encryptRSA(openssl_rsa set_of_data, std::string mode);
-    unsigned char* decryptRSA(openssl_rsa set_of_data, std::string mode);
-
-//    ~openssl_rsa() {
-//        delete[] text;
-//        text = nullptr;
-//        delete[] encrypted_text;
-//        encrypted_text = nullptr;
-//        delete decrypted_text;
-//        decrypted_text = nullptr;
-//    };
+    int AES_initialization(const char* keydata, int keydata_len, unsigned char* salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
+    unsigned char* encryptAES(openssl_aes set_of_data);
+    unsigned char* decryptAES(openssl_aes set_of_data);
 };
 
-#endif //MY_APPLICATION_OPENSSL_RSA_H
+
+#endif //MY_APPLICATION_OPENSSL_AES_H

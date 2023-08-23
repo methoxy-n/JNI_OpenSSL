@@ -192,9 +192,8 @@ public class MainActivity extends AppCompatActivity {
 //            Log.d(TAG, "onCreate: Exception : " + e.getMessage());
 //        }
 
-        /* *********** AES_256 ENC/DEC ********** */
-            byte[] plainText = "TXaxsOMjDo6sN1B7VnImbnHLCXQ9wVDEfDJgI8bRlqB63ZqDE5wpJcEAjYOTkmjBwmSRmP0AuuSyJpmKGB0JPMzD2MSu3NKwauD1O64en684yBiMOhP6TzLDlMu6eKkmc7DOT1rBKK1HinLK5SOituqtMZCfJL5sWQCpzTpAjzWlIvZbmdaOw8ernenzrVJXIm7mta2FP9YQlpgcB6EeBNG4sRY8fGjxwhawBWuhV7a1XgvbBPZFA".getBytes(StandardCharsets.UTF_8);
-            String plain = "TXaxsOMjDo6sN1B7VnImbnHLCXQ9wVDEfDJgI8bRlqB63ZqDE5wpJcEAjYOTkmjBwmSRmP0AuuSyJpmKGB0JPMzD2MSu3NKwauD1O64en684yBiMOhP6TzLDlMu6eKkmc7DOT1rBKK1HinLK5SOituqtMZCfJL5sWQCpzTpAjzWlIvZbmdaOw8ernenzrVJXIm7mta2FP9YQlpgcB6EeBNG4sRY8fGjxwhawBWuhV7a1XgvbBPZFA";
+
+        //String plain = "TXaxsOMjDo6sN1B7VnImbnHLCXQ9wVDEfDJgI8bRlqB63ZqDE5wpJcEAjYOTkmjBwmSRmP0AuuSyJpmKGB0JPMzD2MSu3NKwauD1O64en684yBiMOhP6TzLDlMu6eKkmc7DOT1rBKK1HinLK5SOituqtMZCfJL5sWQCpzTpAjzWlIvZbmdaOw8ernenzrVJXIm7mta2FP9YQlpgcB6EeBNG4sRY8fGjxwhawBWuhV7a1XgvbBPZFA";
 //        StringBuilder sb2 = new StringBuilder();
 //        for (byte b : plainText) {
 //            sb2.append(String.format("%02X", b));
@@ -211,25 +210,74 @@ public class MainActivity extends AppCompatActivity {
 //        } catch (Exception e) {
 //            throw new RuntimeException(e);
 //        }
+
+
+        /* *********** OPENSSL TEST ********** */
+        byte[] plainText = "TXaxsOMjDo6sN1B7VnImbnHLCXQ9wVDEfDJgI8bRlqB63ZqDE5wpJcEAjYOTkmjBwmSRmP0AuuSyJpmKGB0JPMzD2MSu3NKwauD1O64en684yBiMOhP6TzLDlMu6eKkmc7DOT1rBKK1HinLK5SOituqtMZCfJL5sWQCpzTpAjzWlIvZbmdaOw8ernenzrVJXIm7mta2FP9YQlpgcB6EeBNG4sRY8fGjxwhawBWuhV7a1XgvbBPZFA".getBytes(StandardCharsets.UTF_8);
+
+        // RSA TEST !!!!!!!!!!!!!!!!!!!!!!
         byte[] rsa_encrypted = EncryptRSA(private_key, plainText, "Private");
         byte[] rsa_decrypted = DecryptRSA(public_key, rsa_encrypted, "Public");
         StringBuilder sb3 = new StringBuilder();
         for (byte b : plainText) {
             sb3.append(String.format("%02X", b));
         }
-        Log.d(TAG, "onCreate: PlainTextBA = " + sb3);
+        Log.d(TAG, "onCreate: PlainTextBA(RSA) = " + sb3);
 
         StringBuilder sb4 = new StringBuilder();
         for (byte b : rsa_encrypted) {
             sb4.append(String.format("%02X", b));
         }
-        Log.d(TAG, "onCreate: EncryptedTextBA = " + sb4);
+        Log.d(TAG, "onCreate: EncryptedTextBA(RSA) = " + sb4);
 
         StringBuilder sb5 = new StringBuilder();
         for (byte b : rsa_decrypted) {
             sb5.append(String.format("%02X", b));
         }
-        Log.d(TAG, "onCreate: DecryptedTextBA = " + sb5);
+        Log.d(TAG, "onCreate: DecryptedTextBA(RSA) = " + sb5);
+
+        // AES TEST !!!!!!!!!!!!!!!!!!!!!!
+        byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
+        byte[] aes_encrypted = encryptAes256(keyData, plainText);
+        byte[] aes_decrypted = decryptAes256(keyData, aes_encrypted);
+        StringBuilder sbb = new StringBuilder();
+        for (byte b : plainText) {
+            sbb.append(String.format("%02X", b));
+        }
+        Log.i(TAG, "onCreate: PlainTextBA(AES256) = " + sbb);
+
+        StringBuilder sbb1 = new StringBuilder();
+        for (byte b : aes_encrypted) {
+            sbb1.append(String.format("%02X", b));
+        }
+        Log.i(TAG, "onCreate: EncryptedTextBA(AES256) = " + sbb1);
+
+        StringBuilder sbb2 = new StringBuilder();
+        for (byte b : aes_decrypted) {
+            sbb2.append(String.format("%02X", b));
+        }
+        Log.i(TAG, "onCreate: DecryptedTextBA(AES256) = " + sbb2);
+
+        // TDES TEST !!!!!!!!!!!!!!!!!!!!!!
+        byte[] tdes_encrypted = new3DesEnc(plainText);
+        byte[] tdes_decrypted = new3DesDec(tdes_encrypted);
+        StringBuilder sbbb = new StringBuilder();
+        for (byte b : plainText) {
+            sbbb.append(String.format("%02X", b));
+        }
+        Log.v(TAG, "onCreate: PlainTextBA(TDES) = " + sbbb);
+
+        StringBuilder sbbb1 = new StringBuilder();
+        for (byte b : tdes_encrypted) {
+            sbbb1.append(String.format("%02X", b));
+        }
+        Log.v(TAG, "onCreate: EncryptedTextBA(TDES) = " + sbbb1);
+
+        StringBuilder sbbb2 = new StringBuilder();
+        for (byte b : tdes_decrypted) {
+            sbbb2.append(String.format("%02X", b));
+        }
+        Log.v(TAG, "onCreate: DecryptedTextBA(TDES) = " + sbbb2);
 
 //        Log.d(TAG, "onCreate: plainText = " + sb2.toString());
 //        byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
