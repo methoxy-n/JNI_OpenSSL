@@ -6,7 +6,7 @@
 
 /********************************* RSA ENC/DEC *********************************/
 
-RSA *openssl_rsa::createRSApriv(std::string sKey) {
+RSA *openssl_rsa::createRSApriv(const std::string& sKey) {
     RSA *rsa = nullptr;
     BIO *keybio;
     keybio = BIO_new_mem_buf(sKey.c_str(), sKey.length());
@@ -22,7 +22,7 @@ RSA *openssl_rsa::createRSApriv(std::string sKey) {
 
     return rsa;
 }
-RSA *openssl_rsa::createRSApub(std::string sKey) {
+RSA *openssl_rsa::createRSApub(const std::string& sKey) {
     RSA *rsa = nullptr;
     BIO *keybio;
     keybio = BIO_new_mem_buf(sKey.c_str(), sKey.length());
@@ -36,20 +36,20 @@ RSA *openssl_rsa::createRSApub(std::string sKey) {
     return rsa;
 }
 
-unsigned char* openssl_rsa::encryptRSA(openssl_rsa plain, std::string mode) {
+void openssl_rsa::encryptRSA(const openssl_rsa& plain, const std::string& mode) {
     //unsigned char* plain_text = plain;
-
     if(text == nullptr) {
         LOGE("No text");
-        return nullptr;
+        return;
     }
-
     unsigned char chEncryptedData[256] = {};
     int chEncryptedData_len = sizeof chEncryptedData;
     encrypted_len = chEncryptedData_len;
+
     for(int i = 0; i < 256; ++i)
         encrypted_text[i] = 0;
-    //for(int i = 0; i < chEncryptedData_len; ++i) chEncryptedData[i] = 0;
+
+//    for(int i = 0; i < chEncryptedData_len; ++i) chEncryptedData[i] = 0;
 
     std::string pub_mode((char*) "Public");
     std::string priv_mode((char*) "Private");
@@ -60,7 +60,7 @@ unsigned char* openssl_rsa::encryptRSA(openssl_rsa plain, std::string mode) {
         iResult = RSA_public_encrypt(plain.text_len, plain.text, encrypted_text, createRSApub(plain.key), RSA_PKCS1_PADDING);
     if(mode == priv_mode)
         iResult = RSA_private_encrypt(plain.text_len, plain.text, encrypted_text, createRSApriv(plain.key), RSA_PKCS1_PADDING);
-    //else LOGE("Choose right mode --- Public / Private");
+//    else LOGE("Choose right mode --- Public / Private");
 //    env->ReleaseStringUTFChars(env, inData, cData);
 
 // If encryption fails, returns nullptr string, else returns encrypted string
@@ -71,19 +71,19 @@ unsigned char* openssl_rsa::encryptRSA(openssl_rsa plain, std::string mode) {
         ERR_error_string(ERR_get_error(), chErrMsg);
         LOGE("The data Encryption failed due to the reason : %s", chErrMsg);
         free(chErrMsg);
-        return nullptr;
+        return;
     }
 
-   // encrypted_text = chEncryptedData;
+//    encrypted_text = chEncryptedData;
 //    strcpy(reinterpret_cast<char *const>(plain.encrypted_text),
 //           reinterpret_cast<const char *>(chEncryptedData));
 
-    //LOGV("Encrypted: %s", plain.encrypted_text);
+//    LOGV("Encrypted: %s", plain.encrypted_text);
 
-    return encrypted_text;
+//    return encrypted_text;
 }
 
-unsigned char* openssl_rsa::decryptRSA(openssl_rsa set_of_data, std::string mode) {
+void openssl_rsa::decryptRSA(openssl_rsa set_of_data, const std::string& mode) {
 //    unsigned char chDecryptedData[256];
 //    int chDecryptedData_len = sizeof chDecryptedData;
 
@@ -107,14 +107,14 @@ unsigned char* openssl_rsa::decryptRSA(openssl_rsa set_of_data, std::string mode
         ERR_error_string(ERR_get_error(), chErrMsg);
         LOGE("The data Decryption failed due to the reason : %s", chErrMsg);
         free(chErrMsg);
-        return nullptr;
+        return;
     }
 
 //      set_of_data.decrypted_text = chDecryptedData;
 //    strcpy(reinterpret_cast<char *const>(set_of_data.decrypted_text),
 //           reinterpret_cast<const char *>(chDecryptedData));
 
-    return decrypted_text;
+//    return decrypted_text;
 }
 
 

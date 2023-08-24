@@ -1,6 +1,7 @@
 #include "openssl_rsa.h"
 #include "openssl_aes.h"
 #include "openssl_tdes.h"
+#include "openssl_sha256.h"
 /********************************* SHA-256 *********************************/
 extern "C"
 JNIEXPORT jbyteArray JNICALL
@@ -8,30 +9,18 @@ Java_com_example_myapplication_MainActivity_calculateHash(JNIEnv *env, jobject t
                                                           jbyteArray plain_array) {
     (void)thiz;
 
-    jsize len = env->GetArrayLength(plain_array);
-
-    //jbyte into c++ char
+    int len = env->GetArrayLength(plain_array);
     jboolean isCopy;
     jbyte* a = env->GetByteArrayElements(plain_array,&isCopy);
-    char* b;
-    b = (char*) a;
+    unsigned char* Array;
+    Array = (unsigned char*) a;
 
-    // make hash
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, b, len);
-    SHA256_Final(hash, &sha256);
+    openssl_sha256 to_hash(Array, len);
+    to_hash.SHA256(to_hash);
 
-//    for (int i = 0; i < 32; ++i) {
-//        LOGI("%02X", hash[i]); // print each hash byte via log
-//    }
-
-    // unsigned char hash into jbyteArray j_hash_array
     jbyteArray j_hash_array = env->NewByteArray(SHA256_DIGEST_LENGTH);
-    env->SetByteArrayRegion(j_hash_array, 0, SHA256_DIGEST_LENGTH, (jbyte *) hash);
+    env->SetByteArrayRegion(j_hash_array, 0, SHA256_DIGEST_LENGTH, (jbyte *) to_hash.hash);
 
-    // return hash as result
     return j_hash_array;
 }
 /********************************* END SHA-256 *********************************/
@@ -156,19 +145,11 @@ extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_com_example_myapplication_MainActivity_new3DesEnc(JNIEnv *env, jobject thiz,
                                                        jbyteArray plain_text) {
-    unsigned int salt[] = {12345, 54321};
-
     jboolean isCopy;
-//    jbyte* keyData = env->GetByteArrayElements(key, &isCopy);
-//    const char* key_data;
-//    key_data = (const char*) keyData;
-//    int key_data_len = strlen(key_data);
-
     int plainText_len = env->GetArrayLength(plain_text);
     jbyte* temp = env->GetByteArrayElements(plain_text,&isCopy);
     unsigned char* plainText;
     plainText = (unsigned char*) temp;
-    //plainText_len = strlen((char*)plainText);
 
     if(nullptr == plainText)
         return nullptr;
@@ -188,6 +169,7 @@ Java_com_example_myapplication_MainActivity_new3DesEnc(JNIEnv *env, jobject thiz
 //        LOGI("EncryptedText[%d]: %c", i, ciphertext[i]);
 //    }
     // LOGV("EncryptedData: %s", ciphertext);
+
     openssl_tdes to_encrypt(plainText, plainText_len);
     to_encrypt.encryptTDES(to_encrypt);
 

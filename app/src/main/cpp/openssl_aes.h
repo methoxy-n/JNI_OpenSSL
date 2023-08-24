@@ -7,15 +7,11 @@
 
 #include <jni.h>
 #include <string>
-#include <mntent.h>
-#include <unistd.h>
 #include <cstdio>
 
 #include "logdebug.h"
-#include "openssl/aes.h"
 #include "openssl/evp.h"
 #include "openssl/err.h"
-#include "openssl/bio.h"
 
 
 class openssl_aes {
@@ -77,9 +73,9 @@ public:
         key = other.key;
     }
 
-    int AES_initialization(const char* keydata, int keydata_len, unsigned char* salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
-    unsigned char* encryptAES(openssl_aes set_of_data);
-    unsigned char* decryptAES(openssl_aes set_of_data);
+    static int AES_initialization(const char* keydata, int keydata_len, unsigned char* salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
+    void encryptAES(const openssl_aes& set_of_data);
+    void decryptAES(const openssl_aes& set_of_data);
 };
 
 

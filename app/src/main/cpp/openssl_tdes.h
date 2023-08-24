@@ -7,16 +7,11 @@
 
 #include <jni.h>
 #include <string>
-#include <mntent.h>
-#include <unistd.h>
-#include <cstdio>
 
 #include "logdebug.h"
-#include "openssl/des.h"
 #include "openssl/rand.h"
 #include "openssl/evp.h"
 #include "openssl/err.h"
-#include "openssl/bio.h"
 
 class openssl_tdes {
 public:
@@ -72,9 +67,9 @@ public:
         decrypted_len = other.decrypted_len;
     }
 
-    int TDES_initialization(EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
-    unsigned char* encryptTDES(openssl_tdes set_of_data);
-    unsigned char* decryptTDES(openssl_tdes set_of_data);
+    static int TDES_initialization(EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
+    void encryptTDES(const openssl_tdes& set_of_data);
+    void decryptTDES(const openssl_tdes& set_of_data);
 };
 
 

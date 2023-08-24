@@ -279,6 +279,28 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.v(TAG, "onCreate: DecryptedTextBA(TDES) = " + sbbb2);
 
+        /* ****** HASH ****** */
+        byte[] rsa_hash = calculateHash(rsa_decrypted);
+        byte[] aes_hash = calculateHash(aes_decrypted);
+        byte[] t_des_hash = calculateHash(tdes_decrypted);
+
+        StringBuilder rsa_hash_array = new StringBuilder();
+        for(byte b : rsa_hash) {
+            rsa_hash_array.append(String.format("%02X", b));
+        }
+        Log.w(TAG, "onCreate: RSA_DECRYPT_HASH = " + rsa_hash_array);
+
+        StringBuilder aes_hash_array = new StringBuilder();
+        for(byte b : aes_hash) {
+            aes_hash_array.append(String.format("%02X", b));
+        }
+        Log.w(TAG, "onCreate: AES_DECRYPT_HASH = " + aes_hash_array);
+        StringBuilder tdes_hash_array = new StringBuilder();
+        for(byte b : t_des_hash) {
+            tdes_hash_array.append(String.format("%02X", b));
+        }
+        Log.w(TAG, "onCreate: TDES_DECRYPT_HASH = " + tdes_hash_array);
+
 //        Log.d(TAG, "onCreate: plainText = " + sb2.toString());
 //        byte [] keyData = "eQg2MDbk3uUtRhMw".getBytes();
 //        byte [] encryptedText = encryptAes256(keyData, plainText);

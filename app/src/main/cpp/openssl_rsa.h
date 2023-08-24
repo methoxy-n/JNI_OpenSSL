@@ -7,9 +7,6 @@
 
 #include <jni.h>
 #include <string>
-#include <mntent.h>
-#include <unistd.h>
-#include <cstdio>
 
 #include "logdebug.h"
 #include "openssl/rsa.h"
@@ -76,10 +73,10 @@ public:
         key = other.key;
     }
 
-    RSA * createRSApriv(std::string sKey);
-    RSA * createRSApub(std::string sKey);
-    unsigned char* encryptRSA(openssl_rsa set_of_data, std::string mode);
-    unsigned char* decryptRSA(openssl_rsa set_of_data, std::string mode);
+    static RSA * createRSApriv(const std::string& sKey);
+    static RSA * createRSApub(const std::string& sKey);
+    void encryptRSA(const openssl_rsa& set_of_data, const std::string& mode);
+    void decryptRSA(openssl_rsa set_of_data, const std::string& mode);
 
 //    ~openssl_rsa() {
 //        delete[] text;

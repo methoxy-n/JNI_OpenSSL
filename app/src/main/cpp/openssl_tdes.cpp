@@ -41,11 +41,10 @@ int openssl_tdes::TDES_initialization(EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_c
     return 0;
 }
 
-unsigned char* openssl_tdes::encryptTDES(openssl_tdes toEnc) {
-    unsigned int salt[] = {12345, 54321};
-
+void openssl_tdes::encryptTDES(const openssl_tdes& toEnc) {
+    //unsigned int salt[] = {12345, 54321};
     if( nullptr == toEnc.text )
-        return nullptr;
+        return;
 
     enc = EVP_CIPHER_CTX_new();
     dec = EVP_CIPHER_CTX_new();
@@ -62,10 +61,10 @@ unsigned char* openssl_tdes::encryptTDES(openssl_tdes toEnc) {
 //        LOGI("EncryptedText[%d]: %c", i, ciphertext[i]);
 //    }
     EVP_CIPHER_CTX_free(enc);
-    return encrypted_text;
+    //return encrypted_text;
 }
 
-unsigned char* openssl_tdes::decryptTDES(openssl_tdes toDec) {
+void openssl_tdes::decryptTDES(const openssl_tdes& toDec) {
 
     decrypted_len = toDec.text_len;
 
@@ -79,5 +78,5 @@ unsigned char* openssl_tdes::decryptTDES(openssl_tdes toDec) {
 
     EVP_CIPHER_CTX_free(dec);
 
-    return decrypted_text;
+    //return decrypted_text;
 }

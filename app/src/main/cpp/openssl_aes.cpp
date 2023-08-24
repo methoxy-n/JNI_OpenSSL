@@ -26,11 +26,11 @@ int openssl_aes::AES_initialization(const char* keydata, int keydata_len, unsign
     return 0;
 }
 
-unsigned char* openssl_aes::encryptAES(openssl_aes toEnc) {
+void openssl_aes::encryptAES(const openssl_aes& toEnc) {
     unsigned int salt[] = {12345, 54321};
 
     if( nullptr == toEnc.text )
-        return nullptr;
+        return;
 
     unsigned char ciphertext[16];
     int ciphertext_len = sizeof ciphertext;
@@ -41,7 +41,7 @@ unsigned char* openssl_aes::encryptAES(openssl_aes toEnc) {
     if (AES_initialization(toEnc.key, strlen(toEnc.key), (unsigned char *)salt, en, de)) {
         LOGE("Couldn't initialize AES cipher\n");
         LOGV("initializing aes failed");
-        return nullptr;
+        return;
     }
 //    LOGI("Initializing AES success");
 
@@ -56,10 +56,10 @@ unsigned char* openssl_aes::encryptAES(openssl_aes toEnc) {
 
     EVP_CIPHER_CTX_free(en);
 
-    return encrypted_text;
+    //return encrypted_text;
 }
 
-unsigned char* openssl_aes::decryptAES(openssl_aes toDec) {
+void openssl_aes::decryptAES(const openssl_aes& toDec) {
 
     unsigned char plaintext[16];
     int plaintext_len = sizeof plaintext;
@@ -76,5 +76,5 @@ unsigned char* openssl_aes::decryptAES(openssl_aes toDec) {
 
     EVP_CIPHER_CTX_free(de);
 
-    return decrypted_text;
+    //return decrypted_text;
 }

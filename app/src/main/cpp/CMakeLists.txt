@@ -26,7 +26,7 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        myapplication.cpp openssl_rsa.cpp openssl_aes.cpp openssl_tdes.cpp)
+        myapplication.cpp openssl_rsa.cpp openssl_aes.cpp openssl_tdes.cpp openssl_sha256.cpp)
 
 #add_library(
 #        tools_openssl
